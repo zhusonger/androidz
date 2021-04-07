@@ -1,7 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
-
-version = rootProject.ext.widget
+apply from: "../doc.gradle"
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
