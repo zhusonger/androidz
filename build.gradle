@@ -49,7 +49,7 @@ allprojects {
         resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
     }
 
-    group = "com.github.zhusonger.androidz"
+    group = "com.github.zhusonger"
     version = "1.0"
 }
 
