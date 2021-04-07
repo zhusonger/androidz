@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ResizeTextView">
+        <attr name="drawTopWidth" format="dimension"/>
+        <attr name="drawTopHeight" format="dimension"/>
+        <attr name="drawLeftWidth" format="dimension"/>
+        <attr name="drawLeftHeight" format="dimension"/>
+        <attr name="drawRightWidth" format="dimension"/>
+        <attr name="drawRightHeight" format="dimension"/>
+        <attr name="drawBottomWidth" format="dimension"/>
+        <attr name="drawBottomHeight" format="dimension"/>
+    </declare-styleable>
+
+    <declare-styleable name="ShadowLayout">
+        <attr name="shadowDx" format="dimension" />
+        <attr name="shadowDy" format="dimension" />
+        <attr name="shadowRadius" format="dimension" />
+        <attr name="shadowColor" format="color" />
+        <attr name="bgColor" format="color" />
+        <attr name="bgRadius" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="TopSheetBehavior_Layout">
+        <!-- The height of the bottom sheet when it is collapsed. -->
+        <attr name="top_behavior_peekHeight" format="dimension">
+            <!-- Peek at the 16:9 ratio keyline of its parent -->
+            <enum name="auto" value="-1" />
+        </attr>
+        <!-- Whether this bottom sheet can be hidden by dragging it further downwards -->
+        <attr name="top_behavior_hideable" format="boolean" />
+        <!-- Behavior properties will be saved and restored by evaluating each flag.
+              usage: app:behavior_saveFlags=”hideable|skipCollapsed” -->
+        <attr name="top_behavior_saveFlags">
+            <!-- This flag will preserve the peekHeight on configuration change. -->
+            <flag name="peekHeight" value="0x1" />
+            <!-- This flag will preserve the hideable boolean value on configuration change. -->
+            <flag name="hideable" value="0x4" />
+            <!-- This flag will preserve the all the aforementioned values on configuration change. -->
+            <flag name="all" value="-1" />
+            <!-- This flag will not preserve the aforementioned values on configuration change. The only
+                 value preserved will be the positional state, e.g. collapsed, hidden, expanded, etc.
+                 This is the default behavior. -->
+            <flag name="none" value="0" />
+        </attr>
+        <attr name="android:elevation"/>
+    </declare-styleable>
+
+    <declare-styleable name="ZTabLayout">
+        <attr name="custom_view" format="reference"/>
+    </declare-styleable>
+</resources>

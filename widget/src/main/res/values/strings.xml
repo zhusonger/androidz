@@ -1,0 +1,5 @@
+<resources>
+    <string name="top_sheet_behavior" translatable="false">cn.com.lasong.widget.dialog.TopSheetBehavior</string>
+    <string name="load_more_loading">正在加载&#8230;</string>
+    <string name="load_more_wait_to_load">点击加载更多</string>
+</resources>

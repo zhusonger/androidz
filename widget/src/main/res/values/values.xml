@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="top_sheet_slide_duration">150</integer>
+    <dimen name="design_top_sheet_modal_elevation">16dp</dimen>
+
+    <dimen name="androidz_item_touch_helper_swipe_escape_max_velocity">800dp</dimen>
+    <dimen name="androidz_item_touch_helper_swipe_escape_velocity">120dp</dimen>
+</resources>

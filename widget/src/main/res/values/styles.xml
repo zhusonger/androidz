@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns2="http://schemas.android.com/apk/res-auto">
+
+    <!--顶部弹窗样式-->
+    <style name="Theme.Design.Light.TopSheetDialog" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@style/Animation.Design.TopSheetDialog</item>
+        <item name="top_behavior_peekHeight">auto</item>
+        <item name="top_behavior_hideable">true</item>
+        <item name="android:elevation" ns2:ignore="NewApi">
+            @dimen/design_top_sheet_modal_elevation
+        </item>
+    </style>
+    <style name="Animation.Design.TopSheetDialog" parent="Animation.AppCompat.Dialog">
+        <item name="android:windowEnterAnimation">@anim/design_top_sheet_slide_in</item>
+        <item name="android:windowExitAnimation">@anim/design_top_sheet_slide_out</item>
+    </style>
+
+
+    <!--普通弹窗样式-->
+    <style name="AdapterAlertDialog" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@style/AdapterAlertDialogAnim</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.7</item>
+        <item name="android:windowFrame">@null</item>
+    </style>
+    <style name="AdapterAlertDialog.Bottom">
+        <item name="android:windowAnimationStyle">@style/AdapterAlertDialogBottomAnim</item>
+    </style>
+    <style name="AdapterAlertDialog.Bottom.NoDim">
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+    <style name="AdapterAlertDialogAnim" parent="android:Animation.Dialog">
+        <item name="android:windowEnterAnimation">@anim/anim_alert_dialog_modal_in</item>
+        <item name="android:windowExitAnimation">@anim/anim_alert_dialog_modal_out</item>
+    </style>
+    <style name="AdapterAlertDialogBottomAnim">
+        <item name="android:windowEnterAnimation">@anim/anim_alert_dialog_bottom_modal_in</item>
+        <item name="android:windowExitAnimation">@anim/anim_alert_dialog_bottom_modal_out</item>
+    </style>
+</resources>
