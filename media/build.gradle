@@ -1,6 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
-apply from: "../doc.gradle"
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -35,8 +34,6 @@ android {
             jniDebuggable true
         }
     }
-
-
 
     lintOptions {
         abortOnError false

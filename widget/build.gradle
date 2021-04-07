@@ -1,6 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
-apply from: "../doc.gradle"
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -43,17 +42,4 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }
-
-//publish {
-//    userOrg = rootProject.ext.bintrayUser
-//    groupId = rootProject.ext.groupId
-//    bintrayUser = rootProject.ext.bintrayUser
-//    bintrayKey = rootProject.ext.bintrayKey
-//    dryRun false
-//    override true
-//    artifactId = 'widget'
-//    publishVersion = '0.0.5.4'
-//    desc = 'AndroidZ Widget'
-//    website = "https://github.com/zhusonger/androidz_widget"
-//}
 
