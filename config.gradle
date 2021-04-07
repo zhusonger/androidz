@@ -5,11 +5,10 @@ ext {
     compileSdkVersion = 29
     buildToolsVersion = "29.0.2"
 
-    Properties properties = new Properties()
-    File propertyFile = new File(rootDir.getAbsolutePath() + "/local.properties")
-    properties.load(propertyFile.newDataInputStream())
-    bintrayUser = properties.getProperty('bintrayUser')
-    bintrayKey = properties.getProperty('bintrayKey')
-    groupId = properties.getProperty('groupId')
-    website = properties.getProperty('website')
+    // jitpack
+    groupId = "com.github.zhusonger"
+    base = "1.0.0"
+    widget = "1.0.0"
+    media = "1.0.0"
+    plugin = "1.0.0"
 }

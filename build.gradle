@@ -49,8 +49,7 @@ allprojects {
         resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
     }
 
-    group = "com.github.zhusonger"
-    version = "1.0"
+    group = rootProject.ext.groupId
 }
 
 task clean(type: Delete) {
