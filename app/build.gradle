@@ -49,12 +49,9 @@ dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation "androidx.recyclerview:recyclerview:1.1.0"
-    implementation 'cn.com.lasong:base:0.0.3.1'
-    implementation 'cn.com.lasong:widget:0.0.5.2'
-    implementation 'cn.com.lasong:media:0.0.5'
-//    implementation project(":base")
-//    implementation project(":widget")
-//    implementation project(":media")
+    implementation 'com.github.zhusonger.androidz:base:master-SNAPSHOT'
+    implementation 'com.github.zhusonger.androidz:widget:master-SNAPSHOT'
+    implementation 'com.github.zhusonger.androidz:media:master-SNAPSHOT'
 
     // 单独添加核心 module Transferee, 之后至少还需要添加以下三种图片加载器中的一种
     implementation "com.github.Hitomis.transferee:Transferee:1.6.1@aar"
