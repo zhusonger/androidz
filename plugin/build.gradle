@@ -1,0 +1,62 @@
+apply plugin: 'java-gradle-plugin'
+//apply plugin: 'maven-publish'
+//apply plugin: 'groovy'
+apply plugin: 'com.github.dcendents.android-maven'
+
+//group = 'cn.com.lasong'
+//version = '1.0.0'
+
+//compileOptions {
+//    sourceCompatibility JavaVersion.VERSION_1_8
+//    targetCompatibility JavaVersion.VERSION_1_8
+//}
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+dependencies {
+    //gradle sdk
+    implementation gradleApi()
+
+    //从2.0.0版本开始就是在gradle-api中了
+    implementation 'com.android.tools.build:gradle:3.6.4'
+
+    // javassist 相关修改字节码
+    implementation 'org.javassist:javassist:3.27.0-GA'
+
+}
+
+gradlePlugin {
+    plugins {
+        inject {
+            id = 'cn.com.lasong.inject'
+            version = '1.0.0'
+            displayName = 'InjectClass.'
+            description = 'Modify the bytecode.'
+            implementationClass = 'cn.com.lasong.inject.InjectPlugin'
+        }
+
+        time {
+            id = 'cn.com.lasong.time'
+            version = '1.0.0'
+            displayName = 'Gradle Cost Time'
+            description = 'Calculate the time spent.'
+            implementationClass = 'cn.com.lasong.time.TaskTimePlugin'
+        }
+    }
+}
+
+pluginBundle {
+    website = 'https://github.com/zhusonger/androidz'
+    vcsUrl = 'https://github.com/zhusonger/androidz.git'
+    tags = ['gradle', 'publish', 'plugin', 'bytecode']
+}
+
+//apply plugin: 'maven'
+//uploadArchives {
+//    repositories {
+//        mavenDeployer {
+//            repository(url: uri('../repo/greeting'))
+//            snapshotRepository(url: uri('../snapshotRepo/greeting'))
+//        }
+//        version "1.0.0-SNAPSHOT"
+//    }
+//}
