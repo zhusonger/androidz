@@ -6,8 +6,13 @@
 ```
 // 根目录build.gradle
 buildscript {
+    repositories {
+        // 其他
+        ...
+        maven { url "https://jitpack.io" }
+    }
     dependencies {
-        classpath "cn.com.lasong:plugin:latest_version"
+        classpath 'com.github.zhusonger.androidz:plugin:1.0.0'
     }
 }
 ```
@@ -46,11 +51,9 @@ buildscript {
 
 ### CHANGELOG
 
-#### 0.0.2
+#### 1.0.0
 
 * 默认自动导入所有的包名, 避免繁复的加入包名的问题
-
-#### 0.0.3
 
 * 去除 __addFields__ 和 __addMethods__ 属性, 统一都在 __modifyMethods__ 数组中。
 
@@ -67,15 +70,11 @@ buildscript {
 
     按照数组的顺序执行, 可以实现后面的代码应用之前的修改。
 
-#### 0.0.4
-
 * 修改类的修饰符
 
     扩展参数:
 
     modifiers: 类修饰符
-
-#### 0.0.5
 
 * 添加type类型 __deleteAt__ 用于删除代码
 
@@ -106,8 +105,6 @@ buildscript {
     >   不加删除行数, 默认一行, 如下
     >
     >   起始行0,起始行1 = 起始行0#1,起始行1#1
-
-#### 0.0.6
 
 * 添加修改变量的修饰符、变量名
 
@@ -146,7 +143,6 @@ buildscript {
             content: """selectedColor = Color.parseColor("#999999");"""
     ]
     ```
-#### 0.0.7
 
 * 新增捕获异常
 

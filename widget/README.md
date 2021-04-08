@@ -4,10 +4,10 @@
 # 引入
 
 ```
-implementation 'cn.com.lasong:widget:latest.release'
+implementation 'com.github.zhusonger.androidz:widget:1.0.0'
 ```
 
-## v0.0.1  
+## 1.0.0
 
 * 添加歌词控件LrcView  
 使用TextureView实现歌词渲染, 提高渲染效率  
@@ -16,8 +16,6 @@ implementation 'cn.com.lasong:widget:latest.release'
 * 添加拖动控件MoveView
  使用相对布局实现移动布局, 可以像普通RelativeLayout一样使用, 支持移动被MoveView包含的所有内容   
  ![](https://www.lasong.com.cn/assets/img/gif/move.gif)
-
-## v0.0.2
 
 * 添加可设置图标大小的CheckedTextView&EditText
 
@@ -49,8 +47,6 @@ implementation 'cn.com.lasong:widget:latest.release'
         android:textSize="16sp"
         />
     ```
-
-## v0.0.3
 
 * 添加阴影控件, 自定义背景色与阴影色, 阴影控件与实际展示内容大小一致, 不需要预留阴影的空间
 
@@ -94,8 +90,6 @@ implementation 'cn.com.lasong:widget:latest.release'
     </cn.com.lasong.widget.shadow.ShadowLayout>
     ```
 
-## v0.0.4
-
 * 添加顶部滑入弹窗
 
     ```java
@@ -110,8 +104,6 @@ implementation 'cn.com.lasong:widget:latest.release'
     dialog.setCancelable(true);
     dialog.show();
     ```
-
-## v0.0.5
 
 * 添加AdapterAlertDialog, 简化弹窗的实现
 
@@ -187,13 +179,8 @@ implementation 'cn.com.lasong:widget:latest.release'
     lmRecyclerView.disableLoadMore();
     ```
 
-    ### 0.0.5.2
-    * 优化移动控件
-    * 处理全屏状态栏的间距
-    * 添加富文本控件
-
-    ### 0.0.5.3
-    * 添加ZTabLayout, 支持结合viewpager使用自定义布局
-
-    ### 0.0.5.4
-        * AdapterAlertDialog支持x, y偏移
+* 优化移动控件
+* 处理全屏状态栏的间距
+* 添加富文本控件
+* 添加ZTabLayout, 支持结合viewpager使用自定义布局
+* AdapterAlertDialog支持x, y偏移
