@@ -1,7 +1,8 @@
 apply plugin: 'java-gradle-plugin'
+//apply plugin: "com.gradle.plugin-publish"
 //apply plugin: 'maven-publish'
 //apply plugin: 'groovy'
-apply plugin: 'com.github.dcendents.android-maven'
+//apply plugin: 'com.github.dcendents.android-maven'
 
 //group = 'cn.com.lasong'
 //version = '1.0.0'
@@ -43,20 +44,20 @@ gradlePlugin {
         }
     }
 }
-
-pluginBundle {
-    website = 'https://github.com/zhusonger/androidz'
-    vcsUrl = 'https://github.com/zhusonger/androidz.git'
-    tags = ['gradle', 'publish', 'plugin', 'bytecode']
-}
-
-//apply plugin: 'maven'
-//uploadArchives {
-//    repositories {
-//        mavenDeployer {
-//            repository(url: uri('../repo/greeting'))
-//            snapshotRepository(url: uri('../snapshotRepo/greeting'))
-//        }
-//        version "1.0.0-SNAPSHOT"
-//    }
+//
+//pluginBundle {
+//    website = 'https://github.com/zhusonger/androidz'
+//    vcsUrl = 'https://github.com/zhusonger/androidz.git'
+//    tags = ['gradle', 'publish', 'plugin', 'bytecode']
 //}
+
+apply plugin: 'maven'
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: uri('../repo/greeting'))
+            snapshotRepository(url: uri('../snapshotRepo/greeting'))
+        }
+        version "1.0.0-SNAPSHOT"
+    }
+}
