@@ -16,7 +16,7 @@ buildscript {
         // in the individual module build.gradle files
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
 //        classpath "cn.com.lasong:plugin:1.0.0-SNAPSHOT"
-        classpath "cn.com.lasong:plugin:0.0.7.1"
+        classpath "com.github.zhusonger.androidz:plugin:master-SNAPSHOT"
     }
 }
 
