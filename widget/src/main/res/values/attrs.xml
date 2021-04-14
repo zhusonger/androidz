@@ -47,5 +47,6 @@
 
     <declare-styleable name="ZTabLayout">
         <attr name="custom_view" format="reference"/>
+        <attr name="tool_tip" format="boolean"/>
     </declare-styleable>
 </resources>
