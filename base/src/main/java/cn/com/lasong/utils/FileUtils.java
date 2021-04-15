@@ -182,6 +182,7 @@ public class FileUtils {
             int percent = 100 - step;
             long outSize = fileLength;
             while (outSize > maxSize) {
+                bos.reset();//重置baos即清空baos
                 bitmap.compress(Bitmap.CompressFormat.JPEG, percent, bos);
                 outSize = bos.size();
                 percent -= step;
@@ -258,5 +259,17 @@ public class FileUtils {
         }
 
         return packedFile;
+    }
+
+    public static File compressJpeg(File file, long maxSize) {
+        return compressJpeg(file, maxSize, null, 5);
+    }
+
+    public static File compressJpeg(File file, long maxSize, int step) {
+        return compressJpeg(file, maxSize, null, step);
+    }
+
+    public static File compressJpeg(File file, long maxSize, String dstDir) {
+        return compressJpeg(file, maxSize, dstDir, 5);
     }
 }
