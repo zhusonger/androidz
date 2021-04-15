@@ -3,11 +3,19 @@ package cn.com.lasong.utils;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.TextUtils;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * Author: zhusong
@@ -143,5 +151,112 @@ public class FileUtils {
      */
     public static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * 压缩图片文件
+     *
+     * @param file 图片yuan源路径
+     * @param maxSize 图片最大文件大小
+     * @return
+     */
+    public static File compressJpeg(File file, long maxSize, String dstDir, int step) {
+        long fileLength = file.length();
+        // 不需要压缩
+        if (fileLength <= maxSize) {
+            return file;
+        }
+
+        if (TextUtils.isEmpty(dstDir)) {
+            dstDir = file.getParent();
+        }
+        File packedFile = new File(dstDir,
+                "packed_" + file.getName());
+        // 已经存在压缩过的, 不再处理, 直接返回
+        Bitmap bitmap = null;
+        FileOutputStream fos = null;
+        // 先直接压缩图看看
+        try {
+            bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            int percent = 100 - step;
+            long outSize = fileLength;
+            while (outSize > maxSize) {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, percent, bos);
+                outSize = bos.size();
+                percent -= step;
+            }
+            fos = new FileOutputStream(packedFile);
+            fos.write(bos.toByteArray());
+            bos.reset();
+        } catch (Throwable e) {
+            ILog.e("COMPRESS JPG", e);
+            if (packedFile.exists()) {
+                packedFile.delete();
+            }
+        } finally {
+            if (null != fos) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+        // 太大了, 内存放不下, 先进行缩放
+        if (null == bitmap) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+
+            int outHeight = options.outHeight;
+            int outWidth = options.outWidth;
+            int inSampleSize = 1;
+            long outSize = fileLength;
+            while (outSize > maxSize) {
+                inSampleSize *= 2;
+                outHeight = outHeight / 2;
+                outWidth = outWidth / 2;
+                outSize = outHeight * outWidth * 4;
+            }
+
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = inSampleSize;
+            try {
+                bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+
+                if (packedFile.exists()) {
+                    packedFile.delete();
+                }
+                try {
+                    packedFile.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                fos = new FileOutputStream(packedFile);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            } catch (Throwable e) {
+                e.printStackTrace();
+                return null;
+            } finally {
+                if (null != fos) {
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        if (null != bitmap && bitmap.isRecycled()) {
+            bitmap.recycle();
+            bitmap = null;
+        }
+
+        return packedFile;
     }
 }
