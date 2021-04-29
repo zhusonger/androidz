@@ -29,8 +29,8 @@ public class ShadowLayout extends RelativeLayout {
         this(context, attrs, 0);
     }
 
-    private ShadowView shadow;
-    private ShadowMode shadowmode;
+    private final ShadowView shadow;
+    private ShadowMode shadowMode;
 
     public ShadowLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
@@ -40,19 +40,20 @@ public class ShadowLayout extends RelativeLayout {
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.ShadowLayout);
         shadow.bgColor = ta.getColor(R.styleable.ShadowLayout_bgColor, Color.TRANSPARENT);
         shadow.bgRadius = ta.getDimension(R.styleable.ShadowLayout_bgRadius, 0);
-        shadow.mPaint.setColor(shadow.bgColor);
         shadow.dx = ta.getDimension(R.styleable.ShadowLayout_shadowDx, 0);
         shadow.dy = ta.getDimension(R.styleable.ShadowLayout_shadowDy, 0);
         shadow.shadowColor = ta.getColor(R.styleable.ShadowLayout_shadowColor, Color.TRANSPARENT);
         shadow.shadowRadius = ta.getDimension(R.styleable.ShadowLayout_shadowRadius, 0);
+        shadow.borderFlags = ta.getInt(R.styleable.ShadowLayout_radiusFlags, ShadowView.BORDER_ALL);
+        shadow.update();
         int index = ta.getInt(R.styleable.ShadowLayout_shadowMode, -1);
         ta.recycle();
         if (index >= 0) {
-            shadowmode = ShadowMode.values()[index];
+            shadowMode = ShadowMode.values()[index];
         } else {
-            shadowmode = ShadowMode.WRAP_ALL;
+            shadowMode = ShadowMode.WRAP_ALL;
         }
-        setShadowMode(shadowmode);
+        setShadowMode(shadowMode);
     }
 
     /**
@@ -129,8 +130,8 @@ public class ShadowLayout extends RelativeLayout {
             }
         }
         params.setMargins(-shadowRadius, -shadowRadius, -shadowRadius, -shadowRadius);
-        final ShadowMode cache = this.shadowmode;
-        this.shadowmode = mode;
+        final ShadowMode cache = this.shadowMode;
+        this.shadowMode = mode;
         if (cache != mode) {
             requestLayout();
         }
@@ -145,7 +146,7 @@ public class ShadowLayout extends RelativeLayout {
         child.setTranslationZ(1);
         super.addView(child, index, params);
         super.addView(shadow, 0, shadow.getLayoutParams());
-        setShadowMode(shadowmode);
+        setShadowMode(shadowMode);
     }
 
     private boolean cacheClipChildren = false;
