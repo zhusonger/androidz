@@ -184,3 +184,15 @@ implementation 'com.github.zhusonger.androidz:widget:1.0.0'
 * 添加富文本控件
 * 添加ZTabLayout, 支持结合viewpager使用自定义布局
 * AdapterAlertDialog支持x, y偏移
+
+## 1.0.1-alpha0
+
+* 处理1.3.0TabLayout长按的tooltip提醒
+
+## 1.0.1-alpha1
+
+* 新增阴影控件v2, 自适应内容, 并修复列表中背景不显示的问题
+
+    ```java
+    cn.com.lasong.widget.shadow.v2.ShadowLayout
+    ```
