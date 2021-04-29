@@ -76,6 +76,9 @@ public class ShadowLayout extends RelativeLayout {
                 break;
             }
             if (null != anchor) {
+                if (anchor.getId() == NO_ID) {
+                    throw new IllegalStateException("ShadowLayout child id must be set");
+                }
                 params.addRule(RelativeLayout.ALIGN_LEFT, anchor.getId());
                 params.addRule(RelativeLayout.ALIGN_TOP, anchor.getId());
                 params.addRule(RelativeLayout.ALIGN_RIGHT, anchor.getId());
@@ -98,6 +101,9 @@ public class ShadowLayout extends RelativeLayout {
                 break;
             }
             if (null != anchor) {
+                if (anchor.getId() == NO_ID) {
+                    throw new IllegalStateException("ShadowLayout child id must be set");
+                }
                 params.addRule(RelativeLayout.ALIGN_TOP, anchor.getId());
                 params.addRule(RelativeLayout.ALIGN_BOTTOM, anchor.getId());
             }
@@ -115,6 +121,9 @@ public class ShadowLayout extends RelativeLayout {
                 break;
             }
             if (null != anchor) {
+                if (anchor.getId() == NO_ID) {
+                    throw new IllegalStateException("ShadowLayout child id must be set");
+                }
                 params.addRule(RelativeLayout.ALIGN_LEFT, anchor.getId());
                 params.addRule(RelativeLayout.ALIGN_RIGHT, anchor.getId());
             }
@@ -131,10 +140,6 @@ public class ShadowLayout extends RelativeLayout {
     public void addView(View child, int index, ViewGroup.LayoutParams params) {
         if (getChildCount() > 0) {
             throw new IllegalStateException("ShadowLayout can host only one direct child");
-        }
-
-        if (child.getId() == NO_ID) {
-            throw new IllegalStateException("ShadowLayout child id must be set");
         }
 
         child.setTranslationZ(1);

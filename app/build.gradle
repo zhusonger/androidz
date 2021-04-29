@@ -48,11 +48,12 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.google.android.material:material:1.3.0'
     implementation "androidx.recyclerview:recyclerview:1.1.0"
-    implementation 'com.github.zhusonger.androidz:base:master-SNAPSHOT'
-    implementation 'com.github.zhusonger.androidz:widget:master-SNAPSHOT'
-    implementation 'com.github.zhusonger.androidz:media:master-SNAPSHOT'
-
+    implementation 'com.github.zhusonger.androidz:base:1.0.0'
+//    implementation 'com.github.zhusonger.androidz:widget:1.0.0'
+    implementation 'com.github.zhusonger.androidz:media:1.0.0'
+    implementation project(":widget")
     // 单独添加核心 module Transferee, 之后至少还需要添加以下三种图片加载器中的一种
     implementation "com.github.Hitomis.transferee:Transferee:1.6.1@aar"
     // 添加 Glide 图片加载器
