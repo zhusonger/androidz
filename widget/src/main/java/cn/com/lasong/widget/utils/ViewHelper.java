@@ -6,6 +6,7 @@ import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Build;
@@ -222,5 +223,76 @@ public class ViewHelper {
                 view.setLayoutParams(lp);
             }
         }
+    }
+
+
+    // LT 0001
+    // RT 0010
+    // RB 0100
+    // LB 1000
+    // ALL 1111
+    public static final int BORDER_LEFT_TOP = 0b0001;
+    public static final int BORDER_RIGHT_TOP = 0b0010;
+    public static final int BORDER_RIGHT_BOTTOM = 0b0100;
+    public static final int BORDER_LEFT_BOTTOM = 0b1000;
+    public static final int BORDER_ALL = 0b1111;
+    /**
+     * 更新圆角路径
+     */
+    public static Path updateRadiusPath(Path path,
+                                         float left, float top, float right, float bottom, float rx, float ry,
+                                         int borderFlags){
+        if (null == path) {
+            path = new Path();
+        }
+        final boolean lt = (borderFlags & BORDER_LEFT_TOP) > 0;
+        final boolean rt = (borderFlags & BORDER_RIGHT_TOP) > 0;
+        final boolean rb = (borderFlags & BORDER_RIGHT_BOTTOM) > 0;
+        final boolean lb = (borderFlags & BORDER_LEFT_BOTTOM) > 0;
+        path.reset();
+        if (rx < 0) rx = 0;
+        if (ry < 0) ry = 0;
+        float width = right - left;
+        float height = bottom - top;
+        if (rx > width / 2) rx = width / 2;
+        if (ry > height / 2) ry = height / 2;
+        float widthMinusCorners = (width - (2 * rx));
+        float heightMinusCorners = (height - (2 * ry));
+
+        path.moveTo(right, top + ry);
+        if (rt)
+            path.rQuadTo(0, -ry, -rx, -ry);//top-right corner
+        else{
+            path.rLineTo(0, -ry);
+            path.rLineTo(-rx,0);
+        }
+        path.rLineTo(-widthMinusCorners, 0);
+        if (lt)
+            path.rQuadTo(-rx, 0, -rx, ry); //top-left corner
+        else{
+            path.rLineTo(-rx, 0);
+            path.rLineTo(0,ry);
+        }
+        path.rLineTo(0, heightMinusCorners);
+
+        if (lb)
+            path.rQuadTo(0, ry, rx, ry);//bottom-left corner
+        else{
+            path.rLineTo(0, ry);
+            path.rLineTo(rx,0);
+        }
+
+        path.rLineTo(widthMinusCorners, 0);
+        if (rb)
+            path.rQuadTo(rx, 0, rx, -ry); //bottom-right corner
+        else{
+            path.rLineTo(rx,0);
+            path.rLineTo(0, -ry);
+        }
+
+        path.rLineTo(0, -heightMinusCorners);
+
+        path.close();//Given close, last lineto can be removed.
+        return path;
     }
 }

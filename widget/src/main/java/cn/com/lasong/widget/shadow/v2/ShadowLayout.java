@@ -11,6 +11,7 @@ import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
 import cn.com.lasong.widget.R;
+import cn.com.lasong.widget.utils.ViewHelper;
 
 /**
  * Author: zhusong
@@ -44,7 +45,7 @@ public class ShadowLayout extends RelativeLayout {
         shadow.dy = ta.getDimension(R.styleable.ShadowLayout_shadowDy, 0);
         shadow.shadowColor = ta.getColor(R.styleable.ShadowLayout_shadowColor, Color.TRANSPARENT);
         shadow.shadowRadius = ta.getDimension(R.styleable.ShadowLayout_shadowRadius, 0);
-        shadow.borderFlags = ta.getInt(R.styleable.ShadowLayout_radiusFlags, ShadowView.BORDER_ALL);
+        shadow.borderFlags = ta.getInt(R.styleable.ShadowLayout_radiusFlags, ViewHelper.BORDER_ALL);
         shadow.update();
         int index = ta.getInt(R.styleable.ShadowLayout_shadowMode, -1);
         ta.recycle();

@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.view.View;
+import cn.com.lasong.widget.utils.ViewHelper;
 
 /**
  * Author: zhusong
@@ -24,18 +25,8 @@ public class ShadowView extends View {
     float bgRadius;
     int bgColor;
     Path bgPath = new Path();
-    // LT 0001
-    // RT 0010
-    // RB 0100
-    // LB 1000
-    // ALL 1111
-    public static final int BORDER_LEFT_TOP = 0b0001;
-    public static final int BORDER_RIGHT_TOP = 0b0010;
-    public static final int BORDER_RIGHT_BOTTOM = 0b0100;
-    public static final int BORDER_LEFT_BOTTOM = 0b1000;
-    public static final int BORDER_ALL = 0b1111;
     // 标记边界需要圆角的值
-    int borderFlags = BORDER_ALL;
+    int borderFlags = ViewHelper.BORDER_ALL;
     public ShadowView(Context context) {
         super(context);
         setLayerType(LAYER_TYPE_SOFTWARE, mPaint);
@@ -51,16 +42,12 @@ public class ShadowView extends View {
         super.onDraw(canvas);
 
         int saveCount = canvas.save();
-        final float left = bgRadius;
-        final float top = bgRadius;
-        final float right = getWidth() - bgRadius;
-        final float bottom = getHeight() - bgRadius;
-        final boolean lt = (borderFlags & BORDER_LEFT_TOP) > 0;
-        final boolean rt = (borderFlags & BORDER_RIGHT_TOP) > 0;
-        final boolean rb = (borderFlags & BORDER_RIGHT_BOTTOM) > 0;
-        final boolean lb = (borderFlags & BORDER_LEFT_BOTTOM) > 0;
-        updatePath(left, top, right, bottom, bgRadius, bgRadius,
-                lt, rt, rb, lb);
+        final float left = shadowRadius + getPaddingLeft();
+        final float top = shadowRadius + getPaddingTop();
+        final float right = getWidth() - getPaddingRight() - shadowRadius;
+        final float bottom = getHeight() - getPaddingBottom() - shadowRadius;
+        bgPath = ViewHelper.updateRadiusPath(bgPath, left, top, right, bottom,
+                bgRadius, bgRadius, borderFlags);
 
         mPaint.setColor(bgColor);
         if (shadowColor != Color.TRANSPARENT) {
@@ -75,55 +62,5 @@ public class ShadowView extends View {
         canvas.restoreToCount(saveCount);
     }
 
-    /**
-     * 更新路径
-     */
-    private void updatePath(
-            float left, float top, float right, float bottom, float rx, float ry,
-            boolean lt, boolean rt, boolean rb, boolean lb){
-        bgPath.reset();
-        if (rx < 0) rx = 0;
-        if (ry < 0) ry = 0;
-        float width = right - left;
-        float height = bottom - top;
-        if (rx > width / 2) rx = width / 2;
-        if (ry > height / 2) ry = height / 2;
-        float widthMinusCorners = (width - (2 * rx));
-        float heightMinusCorners = (height - (2 * ry));
 
-        bgPath.moveTo(right, top + ry);
-        if (rt)
-            bgPath.rQuadTo(0, -ry, -rx, -ry);//top-right corner
-        else{
-            bgPath.rLineTo(0, -ry);
-            bgPath.rLineTo(-rx,0);
-        }
-        bgPath.rLineTo(-widthMinusCorners, 0);
-        if (lt)
-            bgPath.rQuadTo(-rx, 0, -rx, ry); //top-left corner
-        else{
-            bgPath.rLineTo(-rx, 0);
-            bgPath.rLineTo(0,ry);
-        }
-        bgPath.rLineTo(0, heightMinusCorners);
-
-        if (lb)
-            bgPath.rQuadTo(0, ry, rx, ry);//bottom-left corner
-        else{
-            bgPath.rLineTo(0, ry);
-            bgPath.rLineTo(rx,0);
-        }
-
-        bgPath.rLineTo(widthMinusCorners, 0);
-        if (rb)
-            bgPath.rQuadTo(rx, 0, rx, -ry); //bottom-right corner
-        else{
-            bgPath.rLineTo(rx,0);
-            bgPath.rLineTo(0, -ry);
-        }
-
-        bgPath.rLineTo(0, -heightMinusCorners);
-
-        bgPath.close();//Given close, last lineto can be removed.
-    }
 }

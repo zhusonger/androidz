@@ -24,6 +24,19 @@ public class WidgetActivity extends AppBaseActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityWidgetBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        binding.tvText.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (binding.tvText.getVisibility() == View.VISIBLE) {
+                    binding.tvText.setVisibility(View.GONE);
+                } else {
+                    binding.tvText.setVisibility(View.VISIBLE);
+                }
+
+                binding.tvText.postDelayed(this, 2000);
+            }
+        }, 2000);
     }
 
     @Override

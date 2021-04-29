@@ -11,25 +11,28 @@
         <attr name="drawBottomHeight" format="dimension"/>
     </declare-styleable>
 
+    <attr name="bgColor" format="color" />
+    <attr name="bgRadius" format="dimension" />
+    <attr name="radiusFlags">
+        <flag name="lt" value="1"/>
+        <flag name="rt" value="2"/>
+        <flag name="rb" value="4"/>
+        <flag name="lb" value="8"/>
+    </attr>
     <declare-styleable name="ShadowLayout">
         <attr name="shadowDx" format="dimension" />
         <attr name="shadowDy" format="dimension" />
         <attr name="shadowRadius" format="dimension" />
         <attr name="shadowColor" format="color" />
-        <attr name="bgColor" format="color" />
-        <attr name="bgRadius" format="dimension" />
         <attr name="shadowMode" format="integer" >
             <enum name="wrap_all" value="0"/>
             <enum name="fill_all" value="1"/>
             <enum name="fill_w_warp_h" value="2"/>
             <enum name="warp_w_fill_h" value="3"/>
         </attr>
-        <attr name="radiusFlags">
-            <flag name="lt" value="1"/>
-            <flag name="rt" value="2"/>
-            <flag name="rb" value="4"/>
-            <flag name="lb" value="8"/>
-        </attr>
+        <attr name="bgColor"/>
+        <attr name="bgRadius"/>
+        <attr name="radiusFlags"/>
     </declare-styleable>
 
     <declare-styleable name="TopSheetBehavior_Layout">
@@ -60,5 +63,11 @@
     <declare-styleable name="ZTabLayout">
         <attr name="custom_view" format="reference"/>
         <attr name="tool_tip" format="boolean"/>
+    </declare-styleable>
+
+    <declare-styleable name="RadiusLayout">
+        <attr name="bgColor"/>
+        <attr name="bgRadius"/>
+        <attr name="radiusFlags"/>
     </declare-styleable>
 </resources>
