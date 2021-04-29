@@ -196,3 +196,12 @@ implementation 'com.github.zhusonger.androidz:widget:1.0.0'
     ```java
     cn.com.lasong.widget.shadow.v2.ShadowLayout
     ```
+
+## 1.0.1-alpha2
+
+* 修复阴影控件背景范围显示不正确的问题
+* 新增背景圆角控件
+
+    ```java
+    cn.com.lasong.widget.RadiusLayout
+    ```
