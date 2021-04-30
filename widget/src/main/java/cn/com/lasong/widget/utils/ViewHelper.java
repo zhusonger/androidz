@@ -11,6 +11,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Build;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.Window;
@@ -294,5 +295,69 @@ public class ViewHelper {
 
         path.close();//Given close, last lineto can be removed.
         return path;
+    }
+
+
+    /**
+     * 判断控件是否在滚动视图内
+     * @param view 需要判断的控件
+     * @return true or false
+     */
+    public static boolean isInScrollingContainer(View view) {
+        if (null == view) {
+            return false;
+        }
+        ViewParent p = view.getParent();
+        while (p instanceof ViewGroup) {
+            if (((ViewGroup) p).shouldDelayChildPressedState()) {
+                return true;
+            }
+            p = p.getParent();
+        }
+        return false;
+    }
+
+    private static int sTouchSlop;
+    /**
+     * 判断触摸的位置是否是控件内
+     * @return true or false
+     */
+    public static boolean pointInView(View view, float localX, float localY) {
+        if (null == view) {
+            return false;
+        }
+        if (sTouchSlop <= 0) {
+            sTouchSlop = ViewConfiguration.get(view.getContext()).getScaledTouchSlop();
+        }
+        final float slop = sTouchSlop;
+        return localX >= -slop && localY >= -slop && localX < ((view.getRight() - view.getLeft()) + slop) &&
+                localY < ((view.getBottom() - view.getTop()) + slop);
+    }
+
+    /**
+     * 动态设置透明度
+     * @param alpha 透明度
+     * @param baseColor 需要修改透明度的颜色
+     * @return
+     */
+    public static int alpha(float alpha, int baseColor) {
+        int a = Math.min(255, Math.max(0, (int) (alpha * 255))) << 24;
+        int rgb = 0x00ffffff & baseColor;
+        return a + rgb;
+    }
+
+    /**
+     * 设置view的点击透明度
+     * @param alpha 按下时的透明度
+     * @param view 需要处理按下透明度的控件
+     */
+    public static void setClickAlpha(float alpha, View view) {
+        if (null != view) {
+            ClickAlphaAction action = new ClickAlphaAction(alpha);
+            view.setOnTouchListener(action);
+        }
+    }
+    public static void setClickAlpha(View view) {
+        setClickAlpha(0.5f, view);
     }
 }

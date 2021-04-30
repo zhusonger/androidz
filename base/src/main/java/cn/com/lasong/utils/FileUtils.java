@@ -170,13 +170,14 @@ public class FileUtils {
         if (TextUtils.isEmpty(dstDir)) {
             dstDir = file.getParent();
         }
-        File packedFile = new File(dstDir,
-                "packed_" + file.getName());
+        File packedFile = null;
         // 已经存在压缩过的, 不再处理, 直接返回
         Bitmap bitmap = null;
         FileOutputStream fos = null;
         // 先直接压缩图看看
         try {
+            packedFile = new File(dstDir,
+                    "packed_" + file.getName());
             bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             int percent = 100 - step;
@@ -192,9 +193,10 @@ public class FileUtils {
             bos.reset();
         } catch (Throwable e) {
             ILog.e("COMPRESS JPG", e);
-            if (packedFile.exists()) {
+            if (null != packedFile && packedFile.exists()) {
                 packedFile.delete();
             }
+            packedFile = null;
         } finally {
             if (null != fos) {
                 try {
@@ -227,20 +229,14 @@ public class FileUtils {
             options.inSampleSize = inSampleSize;
             try {
                 bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
-
-                if (packedFile.exists()) {
+                if (null != packedFile && packedFile.exists()) {
                     packedFile.delete();
-                }
-                try {
-                    packedFile.createNewFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
                 fos = new FileOutputStream(packedFile);
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
             } catch (Throwable e) {
-                e.printStackTrace();
-                return null;
+                ILog.e(e);
+                packedFile = null;
             } finally {
                 if (null != fos) {
                     try {
@@ -253,7 +249,7 @@ public class FileUtils {
 
         }
 
-        if (null != bitmap && bitmap.isRecycled()) {
+        if (null != bitmap && !bitmap.isRecycled()) {
             bitmap.recycle();
             bitmap = null;
         }
