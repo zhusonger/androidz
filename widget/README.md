@@ -205,3 +205,42 @@ implementation 'com.github.zhusonger.androidz:widget:1.0.0'
     ```java
     cn.com.lasong.widget.RadiusLayout
     ```
+
+## 1.0.1-alpha3
+
+* 新增RecyclerView吸顶分组实现,
+
+    ```java
+    cn.com.lasong.widget.adapterview.itemdecoration.StickyHeaderDecoration
+    cn.com.lasong.widget.adapterview.itemdecoration.StickHeaderProvider
+
+    // 使用方法
+    StickyHeaderDecoration stickyHeaderDecoration = new StickyHeaderDecoration();
+    // 重写adapter的onAttachedToRecyclerView, 进行捆绑
+    stickyHeaderDecoration.attachRecyclerView(recyclerView, <StickHeaderProvider实现>);
+    // 重写adapter的onDetachedFromRecyclerView, 进行释放
+    stickyHeaderDecoration.detachRecyclerView(recyclerView);
+
+    // StickHeaderProvider的实现是2个方法
+    // createOrUpdateHeader 主要是创建吸顶的布局
+    // isStickHeader判断位置是否是吸顶布局
+    @Override
+    public RecyclerView.ViewHolder createOrUpdateHeader(RecyclerView.ViewHolder cache, LayoutInflater inflater, RecyclerView parent, int position) {
+        if (!isStickHeader(position)) {
+            return null;
+        }
+        ViewHolder holder = cache;
+        if (null == holder) {
+            View v = inflater.inflate(R.layout.item_sticker_header, parent, false);
+            holder = new ZRecyclerViewAdapter.AdapterViewHolder(v, null, null);
+        }
+
+        adapter.bind((ZRecyclerViewAdapter.AdapterViewHolder) holder, data.get(position), position);
+        return holder;
+    }
+
+    @Override
+    public boolean isStickHeader(int position) {
+        return position % 10 == 0;
+    }
+    ```

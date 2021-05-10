@@ -30,5 +30,6 @@
         <activity android:name=".sms.SmsActivity" />
         <activity android:name=".widget.WidgetActivity"/>
         <activity android:name=".gallery.GalleryActivity" />
+        <activity android:name=".widget.StickHeaderActivity" />
     </application>
 </manifest>
