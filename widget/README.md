@@ -248,3 +248,11 @@ implementation 'com.github.zhusonger.androidz:widget:1.0.0'
 ## 1.0.1-alpha4
 
 * 扩展RadiusLayout, 添加边线
+
+## 1.0.1-alpha5
+
+* 添加索引控件, 支持任意形式的控件
+
+    ```java
+    cn.com.lasong.widget.AnyIndexView
+    ```

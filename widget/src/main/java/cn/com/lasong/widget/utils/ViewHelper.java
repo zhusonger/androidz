@@ -335,6 +335,25 @@ public class ViewHelper {
     }
 
     /**
+     * 判断view是否在父控件内的点击事件 是否在控件内
+     * @param view
+     * @param localX
+     * @param localY
+     * @return
+     */
+    public static boolean pointInViewParent(View view, float localX, float localY) {
+        if (null == view) {
+            return false;
+        }
+        if (sTouchSlop <= 0) {
+            sTouchSlop = ViewConfiguration.get(view.getContext()).getScaledTouchSlop();
+        }
+        final float slop = sTouchSlop;
+        return localX >= -slop + view.getLeft() && localY >= -slop + view.getTop()
+                && localX < (view.getRight() + slop) && localY < (view.getBottom() + slop);
+    }
+
+    /**
      * 动态设置透明度
      * @param alpha 透明度
      * @param baseColor 需要修改透明度的颜色
