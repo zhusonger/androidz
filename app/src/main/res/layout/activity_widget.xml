@@ -10,6 +10,8 @@
         app:bgColor="@android:color/holo_blue_bright"
         app:bgRadius="12dp"
         android:layout_margin="20dp"
+        app:borderColor="@android:color/black"
+        app:borderWidth="0.5dp"
         app:radiusFlags="lt|rb">
 
         <ImageView

@@ -69,5 +69,7 @@
         <attr name="bgColor"/>
         <attr name="bgRadius"/>
         <attr name="radiusFlags"/>
+        <attr name="borderWidth"/>
+        <attr name="borderColor" format="color"/>
     </declare-styleable>
 </resources>
