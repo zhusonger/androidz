@@ -244,3 +244,7 @@ implementation 'com.github.zhusonger.androidz:widget:1.0.0'
         return position % 10 == 0;
     }
     ```
+
+## 1.0.1-alpha4
+
+* 扩展RadiusLayout, 添加边线
