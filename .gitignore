@@ -87,3 +87,7 @@ lint/tmp/
 
 .DS_Store
 snapshotRepo
+
+media
+base
+widget
