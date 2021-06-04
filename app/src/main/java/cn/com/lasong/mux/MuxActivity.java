@@ -39,14 +39,18 @@ public class MuxActivity extends AppBaseActivity {
                         if (!isGrant) {
                             return;
                         }
+                        Muxer muxer = new Muxer();
 
                         try {
+//                            File file = new File(Environment.getExternalStorageDirectory(), "geqian.mp3");
+//                            File out = new File(Environment.getExternalStorageDirectory(), "geqian2.mp3");
+
                             File file = new File(Environment.getExternalStorageDirectory(), "test.mp4");
-                            File out = new File(Environment.getExternalStorageDirectory(), "out.mp4");
+                            File out = new File(Environment.getExternalStorageDirectory(), "test2.mp4");
                             if (out.exists()) {
                                 out.delete();
                             }
-                            int ret = Muxer.remux(file.getAbsolutePath(), out.getAbsolutePath());
+                            int ret = muxer.remux(file.getAbsolutePath(), out.getAbsolutePath(), 1, 6.8);
                             ILog.d("ret: " + ret);
                         } catch (Exception e) {
                             e.printStackTrace();
