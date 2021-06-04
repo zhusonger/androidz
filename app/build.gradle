@@ -52,8 +52,8 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:1.1.0"
 //    implementation 'com.github.zhusonger.androidz:base:1.0.1-alpha5'
 //    implementation 'com.github.zhusonger.androidz:widget:1.0.1-alpha5'
-//    implementation 'com.github.zhusonger.androidz:media:1.0.1-alpha5'
-    implementation project(":media")
+    implementation 'com.github.zhusonger:zmedia:1.1.0'
+//    implementation project(":media")
     implementation project(":widget")
     implementation project(":base")
     // 单独添加核心 module Transferee, 之后至少还需要添加以下三种图片加载器中的一种

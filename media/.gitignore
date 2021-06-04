@@ -1,6 +1,0 @@
-/build
-*.iml
-.DS_Store
-
-.externalNativeBuild
-.cxx
