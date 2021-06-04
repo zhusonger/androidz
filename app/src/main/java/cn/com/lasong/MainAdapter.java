@@ -15,6 +15,7 @@ import cn.com.lasong.base.AppManager;
 import cn.com.lasong.gallery.GalleryActivity;
 import cn.com.lasong.lyric.LyricActivity;
 import cn.com.lasong.move.MoveActivity;
+import cn.com.lasong.mux.MuxActivity;
 import cn.com.lasong.resample.ResampleActivity;
 import cn.com.lasong.sms.SmsActivity;
 import cn.com.lasong.widget.StickHeaderActivity;
@@ -60,6 +61,10 @@ public class MainAdapter extends RecyclerView.Adapter<MainItemHolder> implements
         mKeys.append(6, "吸顶列表");
         mIcons.append(6, R.drawable.ic_widget);
         mValues.append(6, StickHeaderActivity.class);
+
+        mKeys.append(7, "视频合并");
+        mIcons.append(7, R.drawable.ic_widget);
+        mValues.append(7, MuxActivity.class);
     }
 
     @NonNull

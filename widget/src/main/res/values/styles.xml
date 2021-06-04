@@ -43,4 +43,12 @@
         <item name="android:windowEnterAnimation">@anim/anim_alert_dialog_bottom_modal_in</item>
         <item name="android:windowExitAnimation">@anim/anim_alert_dialog_bottom_modal_out</item>
     </style>
+
+    <!-- 设置键盘自适应, 背景透明 -->
+    <style name="ZBottomSheetDialog" parent="Theme.Design.BottomSheetDialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
+    </style>
 </resources>

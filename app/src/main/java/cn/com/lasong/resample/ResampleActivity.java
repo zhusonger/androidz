@@ -20,12 +20,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 import cn.com.lasong.R;
 import cn.com.lasong.app.AppBaseActivity;
+import cn.com.lasong.base.result.PERCallback;
 import cn.com.lasong.media.AVChannelLayout;
 import cn.com.lasong.media.AVSampleFormat;
 import cn.com.lasong.media.Resample;
+import cn.com.lasong.utils.ILog;
 
 public class ResampleActivity extends AppBaseActivity implements View.OnClickListener {
 
@@ -56,75 +59,74 @@ public class ResampleActivity extends AppBaseActivity implements View.OnClickLis
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (grantResults[0] != PackageManager.PERMISSION_GRANTED || grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private boolean requestAllPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            Manifest.permission.CAMERA},
-                    0);
-            return false;
-        }
-        return true;
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
     }
 
     @Override
     public void onClick(View v) {
-        if (!requestAllPermissions() || mIsRunning || TextUtils.isEmpty(mOutputEt.getText().toString())) {
+
+        if (mIsRunning || TextUtils.isEmpty(mOutputEt.getText().toString())) {
             return;
         }
-        mIsRunning = true;
 
-        new Thread() {
+        requestPermissions(new PERCallback() {
             @Override
-            public void run() {
-                super.run();
-                Resample resample = new Resample();
-                try {
-                    String[] array = getResources().getStringArray(R.array.sample_rates);
-                    resample.init(AVChannelLayout.AV_CH_LAYOUT_STEREO, AVSampleFormat.AV_SAMPLE_FMT_S16.ordinal(), 44100,
-                            mOutChannelLayoutsSp.getSelectedItemPosition() == 0 ? AVChannelLayout.AV_CH_LAYOUT_MONO : AVChannelLayout.AV_CH_LAYOUT_STEREO,
-                            mOutSampleFmtsSp.getSelectedItemPosition(), Integer.parseInt(array[mOutSampleRatesSp.getSelectedItemPosition()]));
-                    InputStream is = getResources().getAssets().open("shimian.pcm");
-
-                    FileOutputStream fos = new FileOutputStream(new File(mOutputEt.getText().toString()));
-                    byte[] buf = new byte[2048];
-                    byte[] out = new byte[2048];
-                    final long start = System.nanoTime() / 1000_000;
-                    int length = 0;
-                    while ((length = is.read(buf)) > 0) {
-                        int size = resample.resample(buf, length);
-                        int read_size = resample.read(out, size);
-                        fos.write(out, 0, read_size);
-//                        Log.e("NDK_LOG", "SIZE = " + size+", READ SIZE = " + read_size);
-                    }
-                    final long end = System.nanoTime() / 1000_000;
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(ResampleActivity.this, "Resample Finish("+(end - start)+"ms)", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    resample.release();
+            public void onResult(boolean isGrant, Map<String, Boolean> result) {
+                if (!isGrant) {
+                    return;
                 }
-                mIsRunning = false;
+                new Thread() {
+                    @Override
+                    public void run() {
+                        super.run();
+                        if (mIsRunning) {
+                            return;
+                        }
+                        mIsRunning = true;
+                        Resample resample = new Resample();
+                        try {
+                            String[] array = getResources().getStringArray(R.array.sample_rates);
+                            resample.init(AVChannelLayout.AV_CH_LAYOUT_STEREO, AVSampleFormat.AV_SAMPLE_FMT_S16.ordinal(), 44100,
+                                    mOutChannelLayoutsSp.getSelectedItemPosition() == 0 ? AVChannelLayout.AV_CH_LAYOUT_MONO : AVChannelLayout.AV_CH_LAYOUT_STEREO,
+                                    mOutSampleFmtsSp.getSelectedItemPosition(), Integer.parseInt(array[mOutSampleRatesSp.getSelectedItemPosition()]));
+                            InputStream is = getResources().getAssets().open("shimian.pcm");
+
+                            File file = new File(mOutputEt.getText().toString());
+                            if (file.exists()) {
+                                file.delete();
+                            }
+                            file.createNewFile();
+
+                            FileOutputStream fos = new FileOutputStream(file);
+                            byte[] buf = new byte[2048];
+                            byte[] out = new byte[2048];
+                            final long start = System.nanoTime() / 1000_000;
+                            int length = 0;
+                            while ((length = is.read(buf)) > 0) {
+                                int size = resample.resample(buf, length);
+                                int read_size = resample.read(out, size);
+                                fos.write(out, 0, read_size);
+//                        Log.e("NDK_LOG", "SIZE = " + size+", READ SIZE = " + read_size);
+                            }
+                            final long end = System.nanoTime() / 1000_000;
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(ResampleActivity.this, "Resample Finish("+(end - start)+"ms)", Toast.LENGTH_SHORT).show();
+                                    ILog.d("Resample Finish("+(end - start)+"ms)");
+                                }
+                            });
+                            fos.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            resample.release();
+                        }
+                        mIsRunning = false;
+                    }
+                }.start();
             }
-        }.start();
+        }, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE);
     }
 }
