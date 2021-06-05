@@ -1,3 +1,4 @@
+include ':zapp'
 include ':app'
 //include ':widget'
 //include ':base'

@@ -42,6 +42,9 @@ repositories {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
@@ -50,12 +53,12 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'com.google.android.material:material:1.3.0'
     implementation "androidx.recyclerview:recyclerview:1.1.0"
-    implementation 'com.github.zhusonger:zbase:1.0.0'
-    implementation 'com.github.zhusonger:zwidget:1.0.0'
-    implementation 'com.github.zhusonger:zmedia:1.1.0'
-//    implementation project(":media")
-//    implementation project(":widget")
-//    implementation project(":base")
+//    implementation 'com.github.zhusonger:zbase:1.0.0'
+//    implementation 'com.github.zhusonger:zwidget:1.0.0'
+//    implementation 'com.github.zhusonger:zmedia:1.1.0'
+    implementation project(":media")
+    implementation project(":widget")
+    implementation project(":base")
     // 单独添加核心 module Transferee, 之后至少还需要添加以下三种图片加载器中的一种
     implementation "com.github.Hitomis.transferee:Transferee:1.6.1@aar"
     // 添加 Glide 图片加载器
