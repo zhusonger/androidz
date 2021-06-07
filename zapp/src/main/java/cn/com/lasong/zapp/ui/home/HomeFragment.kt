@@ -25,11 +25,7 @@ class HomeFragment : BaseFragment() {
                 ViewModelProvider(this).get(HomeViewModel::class.java)
         val binding = FragmentHomeBinding.inflate(layoutInflater, container, false)
         homeViewModel.text.observe(viewLifecycleOwner, Observer {
-            binding.textHome.text = it
         })
-        binding.textHome.setOnClickListener {
-            homeViewModel.changeText("Change It");
-        }
         return binding.root
     }
 }

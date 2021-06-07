@@ -1,6 +1,7 @@
 package cn.com.lasong.zapp
 
 import android.os.Bundle
+import android.os.Message
 import com.google.android.material.snackbar.Snackbar
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -8,9 +9,10 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import cn.com.lasong.zapp.base.AppBaseActivity
+import cn.com.lasong.zapp.base.CoreActivity
 import cn.com.lasong.zapp.databinding.ActivityMainBinding
 
-class MainActivity : AppBaseActivity() {
+class MainActivity : CoreActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
