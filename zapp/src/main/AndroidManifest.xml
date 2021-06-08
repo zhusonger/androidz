@@ -20,7 +20,9 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/Theme.Androidz.NoActionBar">
+            android:theme="@style/Theme.Androidz.NoActionBar"
+            android:screenOrientation="portrait"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,6 +30,9 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".ui.home.screen.RecordScreenFragment"
+            android:screenOrientation="portrait"
+            />
         <service android:name=".CoreService" />
     </application>
 
