@@ -28,17 +28,16 @@ class HomeFragment : BaseFragment() {
                 ViewModelProvider(this).get(HomeViewModel::class.java)
         val binding = FragmentHomeBinding.inflate(layoutInflater, container, false)
         ViewHelper.setClickAlpha(binding.cardRecordScreen)
-        ViewHelper.setClickAlpha(binding.cardRecordCamera)
+//        ViewHelper.setClickAlpha(binding.cardRecordCamera)
         binding.cardRecordScreen.setOnClickListener {
             findNavController().also {controller ->
-                controller.createDeepLink()
                 controller.navigate(R.id.action_nav_home_to_nav_screen)
             }
         }
 
-        binding.cardRecordCamera.setOnClickListener {
-
-        }
+//        binding.cardRecordCamera.setOnClickListener {
+//
+//        }
         return binding.root
     }
 }

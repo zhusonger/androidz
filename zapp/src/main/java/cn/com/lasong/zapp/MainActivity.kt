@@ -2,6 +2,7 @@ package cn.com.lasong.zapp
 
 import android.os.Bundle
 import android.os.Message
+import android.view.View
 import com.google.android.material.snackbar.Snackbar
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -23,9 +24,6 @@ class MainActivity : CoreActivity() {
         setContentView(binding.root)
         setSupportActionBar(binding.appBarMain.toolbar)
 
-        binding.appBarMain.fab.setOnClickListener {
-
-        }
         val navController = findNavController(R.id.nav_host_fragment)
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
