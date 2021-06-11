@@ -14,5 +14,8 @@
     <string name="home_record_screen_subtitle">免Root实现超清录屏\n请注意保护隐私安全</string>
     <string name="home_record_camera_title">相机录制</string>
     <string name="home_record_camera_subtitle">超清、高清、标清</string>
-    <string name="record_prop_resolution">分辨率</string>
+    <string name="record_resolution">分辨率</string>
+    <string name="record_bitrate">码率</string>
+    <string name="record_bitrate_hint">码率与录制视频的质量以及文件大小成正比</string>
+    <string name="record_fps">帧率</string>
 </resources>
