@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="array_direction">
+        <item>竖屏</item>
+        <item>横屏</item>
+    </string-array>
+    <string-array name="array_resolution">
+        <item>手机分辨率</item>
+        <item>1080p</item>
+        <item>720p</item>
+        <item>480p</item>
+        <item>360p</item>
+        <item>240p</item>
+    </string-array>
+    <string-array name="array_video_bitrate">
+        <item>手机分辨率</item>
+        <item>12Mbps</item>
+        <item>8Mbps</item>
+        <item>6Mbps</item>
+        <item>5Mbps</item>
+        <item>4Mbps</item>
+        <item>2.5Mbps</item>
+        <item>1.5Mbps</item>
+        <item>1Mbps</item>
+    </string-array>
+    <string-array name="array_fps">
+        <item>60FPS</item>
+        <item>50FPS</item>
+        <item>40FPS</item>
+        <item>30FPS</item>
+        <item>25FPS</item>
+        <item>20FPS</item>
+        <item>15FPS</item>
+    </string-array>
+    <string-array name="array_sample_rate">
+        <item>48000Hz</item>
+        <item>44100Hz</item>
+        <item>24000Hz</item>
+        <item>22050Hz</item>
+        <item>11025Hz</item>
+    </string-array>
+    <string-array name="array_channels">
+        <item>单声道(Mono)</item>
+        <item>双声道(Stereo)</item>
+    </string-array>
+</resources>

@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:fillViewport="true"
     android:scrollbars="none">
 
@@ -15,18 +16,20 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="视频存储位置"
+            android:text="@string/record_label_store"
             android:textColor="@color/textDisableHintDark"
             android:textSize="@dimen/caption_text_size" />
 
         <TextView
+            android:id="@+id/tv_store_dir"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
-            android:text="/sdcard/"
-            android:textColor="@color/textPrimaryDark"
-            android:textSize="@dimen/body_text_size" />
+            android:minHeight="48dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            style="@style/RecordLabelStyle.Content"
+            android:gravity="start|top"
+            />
 
         <View
             android:layout_width="match_parent"
@@ -36,12 +39,46 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="视频参数"
+            android:layout_marginTop="20dp"
+            android:text="@string/record_label_video_params"
             android:textColor="@color/textDisableHintDark"
             android:textSize="@dimen/caption_text_size" />
 
-        <LinearLayout style="@style/RecordLayoutStyle">
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/textDiverDark" />
+
+        <LinearLayout
+            android:id="@+id/ll_video_direction"
+            style="@style/RecordLayoutStyle">
+
+            <TextView
+                style="@style/RecordLabelStyle"
+                android:text="@string/record_video_direction" />
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                />
+            <TextView
+                android:id="@+id/tv_video_direction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/RecordLabelStyle.Content"
+                android:text="@string/record_video_direction_default"
+                android:layout_marginEnd="10dp"
+                app:drawableEndCompat="@drawable/ic_arrow_right"
+                android:fontFamily="sans-serif-black"
+                />
+        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/textDiverDark" />
+        <LinearLayout
+            android:id="@+id/ll_resolution"
+            style="@style/RecordLayoutStyle">
 
             <TextView
                 style="@style/RecordLabelStyle"
@@ -52,10 +89,11 @@
                 android:layout_weight="1"
                 />
             <TextView
+                android:id="@+id/tv_video_resolution"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 style="@style/RecordLabelStyle.Content"
-                android:text="720p"
+                tools:text="@string/record_video_resolution_default"
                 app:drawableEndCompat="@drawable/ic_arrow_right"
                 android:layout_marginEnd="10dp" />
         </LinearLayout>
@@ -65,7 +103,9 @@
             android:layout_height="1dp"
             android:background="@color/textDiverDark" />
 
-        <LinearLayout style="@style/RecordLayoutStyle">
+        <LinearLayout
+            android:id="@+id/ll_video_bitrate"
+            style="@style/RecordLayoutStyle">
 
             <TextView
                 style="@style/RecordLabelStyle"
@@ -76,10 +116,11 @@
                 android:layout_weight="1"
                 />
             <TextView
+                android:id="@+id/tv_video_bitrate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 style="@style/RecordLabelStyle.Content"
-                android:text="4Mbps"
+                tools:text="@string/record_bitrate_default"
                 android:layout_marginEnd="10dp"
                 app:drawableEndCompat="@drawable/ic_arrow_right" />
         </LinearLayout>
@@ -97,7 +138,9 @@
             android:layout_marginTop="5dp"
             android:background="@color/textDiverDark" />
 
-        <LinearLayout style="@style/RecordLayoutStyle">
+        <LinearLayout
+            android:id="@+id/ll_fps"
+            style="@style/RecordLayoutStyle">
 
             <TextView
                 style="@style/RecordLabelStyle"
@@ -108,10 +151,11 @@
                 android:layout_weight="1"
                 />
             <TextView
+                android:id="@+id/tv_video_fps"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 style="@style/RecordLabelStyle.Content"
-                android:text="30"
+                tools:text="@string/record_fps_default"
                 android:layout_marginEnd="10dp"
                 app:drawableEndCompat="@drawable/ic_arrow_right" />
         </LinearLayout>
@@ -124,10 +168,11 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="音频参数"
+            android:layout_marginTop="20dp"
+            android:text="@string/record_label_audio_params"
             android:textColor="@color/textDisableHintDark"
-            android:textSize="@dimen/caption_text_size" />
+            android:textSize="@dimen/caption_text_size"
+            />
 
         <LinearLayout style="@style/RecordLayoutStyle">
 
@@ -140,6 +185,7 @@
                 android:layout_weight="1"
                 />
             <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/st_audio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="10dp"
@@ -147,6 +193,85 @@
                 />
         </LinearLayout>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/textDiverDark" />
+
+        <LinearLayout
+            android:id="@+id/ll_sample_rate"
+            style="@style/RecordLayoutStyle">
+
+            <TextView
+                style="@style/RecordLabelStyle"
+                android:text="@string/record_sample_rate" />
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/RecordLabelStyle.Content"
+                tools:text="@string/record_sample_rate_default"
+                android:layout_marginEnd="10dp"
+                app:drawableEndCompat="@drawable/ic_arrow_right" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/textDiverDark" />
+
+        <LinearLayout
+            android:id="@+id/ll_channel"
+            style="@style/RecordLayoutStyle">
+
+            <TextView
+                style="@style/RecordLabelStyle"
+                android:text="@string/record_channel" />
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/RecordLabelStyle.Content"
+                tools:text="@string/record_channel_default"
+                android:layout_marginEnd="10dp"
+                app:drawableEndCompat="@drawable/ic_arrow_right"
+                android:fontFamily="sans-serif-black"
+                />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/textDiverDark" />
+
+        <LinearLayout
+            android:id="@+id/ll_audio_bitrate"
+            style="@style/RecordLayoutStyle">
+
+            <TextView
+                style="@style/RecordLabelStyle"
+                android:text="@string/record_bitrate" />
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/RecordLabelStyle.Content"
+                tools:text="@string/record_audio_bitrate_default"
+                android:layout_marginEnd="10dp"
+                app:drawableEndCompat="@drawable/ic_arrow_right" />
+        </LinearLayout>
 
     </LinearLayout>
 
