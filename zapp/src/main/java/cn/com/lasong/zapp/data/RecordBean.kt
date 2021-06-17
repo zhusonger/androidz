@@ -1,5 +1,7 @@
 package cn.com.lasong.zapp.data
 
+import android.media.AudioFormat
+import android.media.AudioRecord
 import android.os.Environment
 import androidx.annotation.IntDef
 import cn.com.lasong.zapp.R
@@ -30,10 +32,15 @@ class RecordBean {
     var audioEnable = true // enable audio
     var audioSampleRate = 44100 // 44.1KHz
     var audioBitrate = 96_000 // 96kbps
+    var audioChannel = AudioFormat.CHANNEL_IN_MONO // 单双声道
 
 
     val saveDirDisplay : String
-        get() = (saveDir ?: applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath) as String
+        get() {
+            var dir = (saveDir ?: applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath) as String
+            dir = dir.replace("/", "/\u2060")
+            return dir
+        }
 
     val directionDisplay : String
         get() {
@@ -61,12 +68,27 @@ class RecordBean {
         }
 
     val videoResolutionDisplay : String
-        get() = videoResolution.second.toString() + "p"
+        get() = "%dp".format(videoResolution.second)
 
     val videoBitrateDisplay : String
-        get() = (videoBitrate / 1000_000).toString() + "Mbps"
+        get() = "%dMbps".format(videoBitrate / 1000_000)
 
 
     val videoFpsDisplay : String
-        get() = videoFps.toString() + "FPS"
+        get() = "%dFPS".format(videoFps)
+
+    val audioSampleRateDisplay : String
+        get() = "%.1fKHz".format(audioSampleRate / 1000.0f)
+
+    val audioChannelDisplay : String
+        get() {
+            val array = applicationContext().resources.getStringArray(R.array.array_channels)
+            return when(audioChannel) {
+                AudioFormat.CHANNEL_IN_MONO -> array[0]
+                else -> array[1]
+            }
+        }
+
+    val audioBitrateDisplay : String
+        get() = "%dKbps".format(audioBitrate / 1000)
 }

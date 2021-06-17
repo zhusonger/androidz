@@ -10,8 +10,6 @@ import cn.com.lasong.zapp.ZApp
 import cn.com.lasong.zapp.ZApp.Companion.JSON
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.databinding.FragmentRecordScreenBinding
-import cn.com.lasong.zapp.widget.WordBreakTransformationMethod
-import com.google.gson.Gson
 import com.tencent.mmkv.MMKV
 
 /**
@@ -39,12 +37,22 @@ class RecordScreenFragment : BaseFragment() {
                 JSON.fromJson(it, RecordBean::class.java)
             }
         }
-        binding.tvStoreDir.transformationMethod = WordBreakTransformationMethod
+        binding.stAudio.setOnCheckedChangeListener { _, isChecked ->
+               if (isChecked) {
+                   binding.llAudioParams.visibility = View.VISIBLE
+               } else {
+                   binding.llAudioParams.visibility = View.GONE
+               }
+        }
         binding.tvStoreDir.text = params.saveDirDisplay
         binding.tvVideoDirection.text = params.directionDisplay
         binding.tvVideoResolution.text = params.videoResolutionDisplay
         binding.tvVideoBitrate.text = params.videoBitrateDisplay
         binding.tvVideoFps.text = params.videoFpsDisplay
+        binding.stAudio.isChecked = params.audioEnable
+        binding.tvSampleRate.text = params.audioSampleRateDisplay
+        binding.tvChannel.text = params.audioChannelDisplay
+        binding.tvAudioBitrate.text = params.audioBitrateDisplay
         return binding.root
     }
 }
