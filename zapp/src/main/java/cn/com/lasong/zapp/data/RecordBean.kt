@@ -1,12 +1,9 @@
 package cn.com.lasong.zapp.data
 
 import android.media.AudioFormat
-import android.media.AudioRecord
 import android.os.Environment
-import androidx.annotation.IntDef
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
-import java.lang.annotation.RetentionPolicy
 
 /**
  * Author: zhusong
@@ -35,11 +32,10 @@ class RecordBean {
     var audioChannel = AudioFormat.CHANNEL_IN_MONO // 单双声道
 
 
-    val saveDirDisplay : String
+    val saveDirDisplay : String?
         get() {
-            var dir = (saveDir ?: applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath) as String
-            dir = dir.replace("/", "/\u2060")
-            return dir
+            saveDir = saveDir ?: applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath
+            return saveDir?.replace("/", "/\u2060")
         }
 
     val directionDisplay : String

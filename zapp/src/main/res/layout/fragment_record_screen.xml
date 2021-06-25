@@ -1,231 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    android:fillViewport="true"
-    android:scrollbars="none">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/record_label_store"
-            android:textColor="@color/textDisableHintDark"
-            android:textSize="@dimen/caption_text_size" />
-
-        <TextView
-            android:id="@+id/tv_store_dir"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
-            style="@style/RecordLabelStyle.Content"
-            android:gravity="start|top"
-            />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/textDiverDark" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/record_label_video_params"
-            android:textColor="@color/textDisableHintDark"
-            android:textSize="@dimen/caption_text_size" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/textDiverDark" />
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:fillViewport="true"
+        android:scrollbars="none">
 
         <LinearLayout
-            android:id="@+id/ll_video_direction"
-            style="@style/RecordLayoutStyle">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
 
             <TextView
-                style="@style/RecordLabelStyle"
-                android:text="@string/record_video_direction" />
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                />
-            <TextView
-                android:id="@+id/tv_video_direction"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="@string/record_label_store"
+                android:textColor="@color/textDisableHintDark"
+                android:textSize="@dimen/caption_text_size" />
+
+            <TextView
+                android:id="@+id/tv_store_dir"
                 style="@style/RecordLabelStyle.Content"
-                android:text="@string/record_video_direction_default"
-                android:layout_marginEnd="10dp"
-                app:drawableEndCompat="@drawable/ic_arrow_right"
-                android:fontFamily="sans-serif-black"
-                />
-        </LinearLayout>
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/textDiverDark" />
-        <LinearLayout
-            android:id="@+id/ll_resolution"
-            style="@style/RecordLayoutStyle">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="start|top"
+                android:minHeight="48dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/textDiverDark" />
 
             <TextView
-                style="@style/RecordLabelStyle"
-                android:text="@string/record_resolution" />
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                />
-            <TextView
-                android:id="@+id/tv_video_resolution"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                style="@style/RecordLabelStyle.Content"
-                tools:text="@string/record_video_resolution_default"
-                app:drawableEndCompat="@drawable/ic_arrow_right"
-                android:layout_marginEnd="10dp" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/textDiverDark" />
-
-        <LinearLayout
-            android:id="@+id/ll_video_bitrate"
-            style="@style/RecordLayoutStyle">
-
-            <TextView
-                style="@style/RecordLabelStyle"
-                android:text="@string/record_bitrate" />
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                />
-            <TextView
-                android:id="@+id/tv_video_bitrate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                style="@style/RecordLabelStyle.Content"
-                tools:text="@string/record_bitrate_default"
-                android:layout_marginEnd="10dp"
-                app:drawableEndCompat="@drawable/ic_arrow_right" />
-        </LinearLayout>
-
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="@dimen/caption_text_size"
-            android:textColor="@color/textDisableHintDark"
-            android:text="@string/record_bitrate_hint" />
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="5dp"
-            android:background="@color/textDiverDark" />
-
-        <LinearLayout
-            android:id="@+id/ll_fps"
-            style="@style/RecordLayoutStyle">
-
-            <TextView
-                style="@style/RecordLabelStyle"
-                android:text="@string/record_fps" />
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                />
-            <TextView
-                android:id="@+id/tv_video_fps"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                style="@style/RecordLabelStyle.Content"
-                tools:text="@string/record_fps_default"
-                android:layout_marginEnd="10dp"
-                app:drawableEndCompat="@drawable/ic_arrow_right" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/textDiverDark" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/record_label_audio_params"
-            android:textColor="@color/textDisableHintDark"
-            android:textSize="@dimen/caption_text_size"
-            />
-
-        <LinearLayout style="@style/RecordLayoutStyle">
-
-            <TextView
-                style="@style/RecordLabelStyle"
-                android:text="是否开启录音" />
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                />
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/st_audio"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:checked="true"
-                />
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/textDiverDark" />
-
-        <LinearLayout
-            android:id="@+id/ll_audio_params"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:id="@+id/ll_sample_rate"
-                style="@style/RecordLayoutStyle">
-
-                <TextView
-                    style="@style/RecordLabelStyle"
-                    android:text="@string/record_sample_rate" />
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/tv_sample_rate"
-                    style="@style/RecordLabelStyle.Content"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    app:drawableEndCompat="@drawable/ic_arrow_right"
-                    tools:text="@string/record_sample_rate_default" />
-            </LinearLayout>
+                android:layout_marginTop="20dp"
+                android:text="@string/record_label_video_params"
+                android:textColor="@color/textDisableHintDark"
+                android:textSize="@dimen/caption_text_size" />
 
             <View
                 android:layout_width="match_parent"
@@ -233,12 +54,12 @@
                 android:background="@color/textDiverDark" />
 
             <LinearLayout
-                android:id="@+id/ll_channel"
+                android:id="@+id/ll_video_direction"
                 style="@style/RecordLayoutStyle">
 
                 <TextView
                     style="@style/RecordLabelStyle"
-                    android:text="@string/record_channel" />
+                    android:text="@string/record_video_direction" />
 
                 <Space
                     android:layout_width="0dp"
@@ -246,14 +67,14 @@
                     android:layout_weight="1" />
 
                 <TextView
-                    android:id="@+id/tv_channel"
+                    android:id="@+id/tv_video_direction"
                     style="@style/RecordLabelStyle.Content"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="10dp"
                     android:fontFamily="sans-serif-black"
-                    app:drawableEndCompat="@drawable/ic_arrow_right"
-                    tools:text="@string/record_channel_default" />
+                    android:text="@string/record_video_direction_default"
+                    app:drawableEndCompat="@drawable/ic_arrow_right" />
             </LinearLayout>
 
             <View
@@ -262,7 +83,35 @@
                 android:background="@color/textDiverDark" />
 
             <LinearLayout
-                android:id="@+id/ll_audio_bitrate"
+                android:id="@+id/ll_resolution"
+                style="@style/RecordLayoutStyle">
+
+                <TextView
+                    style="@style/RecordLabelStyle"
+                    android:text="@string/record_resolution" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tv_video_resolution"
+                    style="@style/RecordLabelStyle.Content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    app:drawableEndCompat="@drawable/ic_arrow_right"
+                    tools:text="@string/record_video_resolution_default" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/textDiverDark" />
+
+            <LinearLayout
+                android:id="@+id/ll_video_bitrate"
                 style="@style/RecordLayoutStyle">
 
                 <TextView
@@ -275,15 +124,194 @@
                     android:layout_weight="1" />
 
                 <TextView
-                    android:id="@+id/tv_audio_bitrate"
+                    android:id="@+id/tv_video_bitrate"
                     style="@style/RecordLabelStyle.Content"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="10dp"
                     app:drawableEndCompat="@drawable/ic_arrow_right"
-                    tools:text="@string/record_audio_bitrate_default" />
+                    tools:text="@string/record_bitrate_default" />
+            </LinearLayout>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/record_bitrate_hint"
+                android:textColor="@color/textDisableHintDark"
+                android:textSize="@dimen/caption_text_size" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:background="@color/textDiverDark" />
+
+            <LinearLayout
+                android:id="@+id/ll_fps"
+                style="@style/RecordLayoutStyle">
+
+                <TextView
+                    style="@style/RecordLabelStyle"
+                    android:text="@string/record_fps" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tv_video_fps"
+                    style="@style/RecordLabelStyle.Content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    app:drawableEndCompat="@drawable/ic_arrow_right"
+                    tools:text="@string/record_fps_default" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/textDiverDark" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/record_label_audio_params"
+                android:textColor="@color/textDisableHintDark"
+                android:textSize="@dimen/caption_text_size" />
+
+            <LinearLayout style="@style/RecordLayoutStyle">
+
+                <TextView
+                    style="@style/RecordLabelStyle"
+                    android:text="@string/record_label_audio_enable" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/st_audio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:checked="true" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/textDiverDark" />
+
+            <LinearLayout
+                android:id="@+id/ll_audio_params"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/ll_sample_rate"
+                    style="@style/RecordLayoutStyle">
+
+                    <TextView
+                        style="@style/RecordLabelStyle"
+                        android:text="@string/record_sample_rate" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tv_sample_rate"
+                        style="@style/RecordLabelStyle.Content"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        app:drawableEndCompat="@drawable/ic_arrow_right"
+                        tools:text="@string/record_sample_rate_default" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/textDiverDark" />
+
+                <LinearLayout
+                    android:id="@+id/ll_channel"
+                    style="@style/RecordLayoutStyle">
+
+                    <TextView
+                        style="@style/RecordLabelStyle"
+                        android:text="@string/record_channel" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tv_channel"
+                        style="@style/RecordLabelStyle.Content"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:fontFamily="sans-serif-black"
+                        app:drawableEndCompat="@drawable/ic_arrow_right"
+                        tools:text="@string/record_channel_default" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/textDiverDark" />
+
+                <LinearLayout
+                    android:id="@+id/ll_audio_bitrate"
+                    style="@style/RecordLayoutStyle">
+
+                    <TextView
+                        style="@style/RecordLabelStyle"
+                        android:text="@string/record_bitrate" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tv_audio_bitrate"
+                        style="@style/RecordLabelStyle.Content"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        app:drawableEndCompat="@drawable/ic_arrow_right"
+                        tools:text="@string/record_audio_bitrate_default" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+    </ScrollView>
 
-</ScrollView>
+    <cn.com.lasong.widget.RadiusLayout
+        android:id="@+id/layout_record"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        app:bgCircle="true"
+        app:bgColor="@android:color/darker_gray"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="10dp">
+
+        <CheckedTextView
+            android:id="@+id/tv_record"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_centerInParent="true"
+            android:background="@drawable/ic_record"
+            />
+    </cn.com.lasong.widget.RadiusLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

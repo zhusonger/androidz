@@ -26,6 +26,9 @@ class ZApp : BaseApplication() {
         fun applicationContext() : Context {
             return INSTANCE.applicationContext
         }
+        fun appInstance() : ZApp {
+            return INSTANCE
+        }
     }
     override fun onCreate() {
         super.onCreate()

@@ -31,4 +31,5 @@
     <string name="record_sample_rate_default">44.1KHz</string>
     <string name="record_channel_default">单声道</string>
     <string name="record_audio_bitrate_default">96Kbps</string>
+    <string name="record_label_audio_enable">是否开启录音</string>
 </resources>
