@@ -1,14 +1,18 @@
 package cn.com.lasong.zapp.ui.home.screen
 
 import android.Manifest
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.ActivityResultCallback
 import androidx.lifecycle.ViewModelProvider
 import cn.com.lasong.base.BaseFragment
-import cn.com.lasong.utils.DeviceUtils
+import cn.com.lasong.utils.FileUtils
+import cn.com.lasong.utils.ILog
 import cn.com.lasong.widget.utils.ViewHelper
+import cn.com.lasong.zapp.base.contract.PickDirectory
 import cn.com.lasong.zapp.databinding.FragmentRecordScreenBinding
 
 /**
@@ -23,6 +27,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
     private lateinit var viewModel: RecordScreenViewModel
 
     private lateinit var binding: FragmentRecordScreenBinding
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         viewModel = ViewModelProvider(this).get(RecordScreenViewModel::class.java)
@@ -57,24 +62,32 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                 binding.llAudioParams.visibility = View.GONE
             }
         }
+
+        viewModel.pickLauncher = registerForActivityResult(
+            PickDirectory(),
+            object : ActivityResultCallback<Uri?> {
+                override fun onActivityResult(uri: Uri?) {
+                    // Handle the returned Uri
+                    ILog.d("uri :" + uri +"," + FileUtils.getFilePath(context, uri))
+                }
+            })
+
+
         return binding.root
     }
 
     override fun onClick(v: View?) {
-
-
         when(v) {
             binding.tvStoreDir -> {
-                if (DeviceUtils.isN()) {
-                    requestPermissions({ isGrant, _ ->
-                        if (!isGrant) {
-                            return@requestPermissions
-                        }
-                        viewModel.selectStoreDir()
-                    }, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                } else {
-                    viewModel.selectStoreDir()
+                if (viewModel.params.value?.isQ == true) {
+                    return
                 }
+                requestPermissions({ isGrant, _ ->
+                    if (!isGrant) {
+                        return@requestPermissions
+                    }
+                    viewModel.selectStoreDir()
+                }, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }
     }

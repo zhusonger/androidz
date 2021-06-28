@@ -1,17 +1,11 @@
 package cn.com.lasong.zapp.ui.home.screen
 
-import android.content.Intent
-import android.net.Uri
-import androidx.core.content.FileProvider
+import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import cn.com.lasong.utils.DeviceUtils
-import cn.com.lasong.zapp.BuildConfig
 import cn.com.lasong.zapp.ZApp
-import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 import cn.com.lasong.zapp.data.RecordBean
 import com.tencent.mmkv.MMKV
-import java.io.File
 
 
 /**
@@ -32,22 +26,16 @@ class RecordScreenViewModel : ViewModel() {
         }
     }
 
+    lateinit var pickLauncher: ActivityResultLauncher<String>
+
     // 选择存储路径
     fun selectStoreDir() {
         val saveDir: String = params.value?.saveDir as String
+        pickLauncher.launch(saveDir)
+    }
 
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.addCategory(Intent.CATEGORY_DEFAULT)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        val uri : Uri
-        if (DeviceUtils.isN()) {
-            uri = Uri.fromFile(File(saveDir))
-        } else {
-            uri  = FileProvider.getUriForFile(applicationContext(), BuildConfig.FILE_PROVIDER_AUTHOR, File(saveDir))
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        intent.setDataAndType(uri, "*/*")
-        Intent.createChooser(intent, "视频存储")
-        applicationContext().startActivity(intent)
+    override fun onCleared() {
+        super.onCleared()
+        pickLauncher.unregister()
     }
 }

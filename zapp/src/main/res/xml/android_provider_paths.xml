@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!--添加应用外置sd卡下的应用目录 DCIM-->
-    <external-files-path
-        name="my_video"
-        path="DCIM/"/>
-
+    <!--添加应用外置sd卡下的应用目录 /sdcard/<packagename>/media/DCIM-->
+    <external-media-path
+        name="zapp_media"
+        path="DCIM"/>
 </paths>

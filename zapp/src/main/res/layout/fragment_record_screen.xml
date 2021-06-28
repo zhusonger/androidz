@@ -30,7 +30,7 @@
                 style="@style/RecordLabelStyle.Content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="start|top"
+                android:gravity="start|center_vertical"
                 android:minHeight="48dp"
                 android:paddingTop="3dp"
                 android:paddingBottom="3dp" />

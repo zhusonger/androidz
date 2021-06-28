@@ -1,7 +1,6 @@
 package cn.com.lasong.zapp.data
 
 import android.media.AudioFormat
-import android.os.Environment
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 
@@ -34,7 +33,10 @@ class RecordBean {
 
     val saveDirDisplay : String?
         get() {
-            saveDir = saveDir ?: applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath
+            if (null == saveDir) {
+                saveDir = applicationContext().externalMediaDirs[0]?.absolutePath
+            }
+
             return saveDir?.replace("/", "/\u2060")
         }
 
