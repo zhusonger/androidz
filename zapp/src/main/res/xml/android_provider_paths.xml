@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <!--添加应用外置sd卡下的应用目录 /sdcard/<packagename>/media/DCIM-->
+    <!--添加应用外置sd卡下的应用目录 /sdcard/Android/<packagename>/media/DCIM-->
     <external-media-path
         name="zapp_media"
-        path="DCIM"/>
+        path="."/>
+
+    <!--添加应用外置sd卡下的应用目录 /sdcard/Android/data/<packagename>/files/DCIM-->
+    <external-files-path
+        name="zapp_files"
+        path="."/>
+    <external-path name="external" path="." />
 </paths>

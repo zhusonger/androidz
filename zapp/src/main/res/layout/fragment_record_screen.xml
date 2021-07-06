@@ -21,37 +21,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/record_label_store"
-                android:textColor="@color/textDisableHintDark"
-                android:textSize="@dimen/caption_text_size" />
-
-            <TextView
-                android:id="@+id/tv_store_dir"
-                style="@style/RecordLabelStyle.Content"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="start|center_vertical"
-                android:minHeight="48dp"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/textDiverDark" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
+                android:layout_marginBottom="5dp"
                 android:text="@string/record_label_video_params"
                 android:textColor="@color/textDisableHintDark"
                 android:textSize="@dimen/caption_text_size" />
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/textDiverDark" />
 
             <LinearLayout
                 android:id="@+id/ll_video_direction"
@@ -179,6 +154,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
+                android:layout_marginBottom="5dp"
                 android:text="@string/record_label_audio_params"
                 android:textColor="@color/textDisableHintDark"
                 android:textSize="@dimen/caption_text_size" />

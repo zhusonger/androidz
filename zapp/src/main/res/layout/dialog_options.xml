@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cn.com.lasong.widget.RadiusLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:bgColor="@android:color/white"
+    app:bgRadius="10dp"
+    app:radiusFlags="lt|rt">
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:textSize="@dimen/subheading_text_size"
+        android:textStyle="bold"
+        android:layout_margin="10dp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        tools:text="Title" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_options"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_title"
+        android:fadingEdge="none"
+        android:overScrollMode="never"
+        android:layout_marginBottom="10dp"
+        />
+</cn.com.lasong.widget.RadiusLayout>

@@ -1,6 +1,7 @@
 package cn.com.lasong.zapp.data
 
 import android.media.AudioFormat
+import android.os.Environment
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 
@@ -17,7 +18,8 @@ class RecordBean {
         const val DIRECTION_LANDSCAPE = 1
     }
 
-    var saveDir: String? = null // save dir
+    // save dir
+    var saveDir: String? = applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath
 
     var videoDirection = -1 // video direction
 
@@ -29,16 +31,6 @@ class RecordBean {
     var audioSampleRate = 44100 // 44.1KHz
     var audioBitrate = 96_000 // 96kbps
     var audioChannel = AudioFormat.CHANNEL_IN_MONO // 单双声道
-
-
-    val saveDirDisplay : String?
-        get() {
-            if (null == saveDir) {
-                saveDir = applicationContext().externalMediaDirs[0]?.absolutePath
-            }
-
-            return saveDir?.replace("/", "/\u2060")
-        }
 
     val directionDisplay : String
         get() {

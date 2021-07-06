@@ -1,19 +1,16 @@
 package cn.com.lasong.zapp.ui.home.screen
 
-import android.Manifest
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import cn.com.lasong.base.BaseFragment
-import cn.com.lasong.utils.FileUtils
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.widget.utils.ViewHelper
-import cn.com.lasong.zapp.base.contract.PickDirectory
 import cn.com.lasong.zapp.databinding.FragmentRecordScreenBinding
+import cn.com.lasong.zapp.ui.home.OptionDialog
 
 /**
  * Author: zhusong
@@ -33,7 +30,6 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
         viewModel = ViewModelProvider(this).get(RecordScreenViewModel::class.java)
         binding = FragmentRecordScreenBinding.inflate(layoutInflater, container, false)
         viewModel.params.observe(viewLifecycleOwner, {
-            binding.tvStoreDir.text = it.saveDirDisplay
             binding.tvVideoDirection.text = it.directionDisplay
             binding.tvVideoResolution.text = it.videoResolutionDisplay
             binding.tvVideoBitrate.text = it.videoBitrateDisplay
@@ -43,7 +39,6 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             binding.tvChannel.text = it.audioChannelDisplay
             binding.tvAudioBitrate.text = it.audioBitrateDisplay
         })
-        binding.tvStoreDir.setOnClickListener(this)
         binding.llVideoDirection.setOnClickListener(this)
         binding.llResolution.setOnClickListener(this)
         binding.llVideoBitrate.setOnClickListener(this)
@@ -64,31 +59,25 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
         }
 
         viewModel.pickLauncher = registerForActivityResult(
-            PickDirectory(),
-            object : ActivityResultCallback<Uri?> {
-                override fun onActivityResult(uri: Uri?) {
-                    // Handle the returned Uri
-                    ILog.d("uri :" + uri +"," + FileUtils.getFilePath(context, uri))
-                }
-            })
+            ActivityResultContracts.OpenDocumentTree()
+        ) {
+            ILog.d("result:" + it?.toString())
+        }
 
 
         return binding.root
     }
 
-    override fun onClick(v: View?) {
+    override fun onClick(v: View) {
+        val context = v.context
         when(v) {
-            binding.tvStoreDir -> {
-                if (viewModel.params.value?.isQ == true) {
-                    return
-                }
-                requestPermissions({ isGrant, _ ->
-                    if (!isGrant) {
-                        return@requestPermissions
-                    }
-                    viewModel.selectStoreDir()
-                }, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            binding.llVideoDirection -> {
+                OptionDialog.newInstance(context, "Test", arrayOf("1")).show()
             }
         }
+    }
+
+    fun showOption() {
+
     }
 }
