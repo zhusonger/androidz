@@ -49,10 +49,15 @@
                     tools:text="10GB" />
             </LinearLayout>
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/textDiverDark" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginBottom="5dp"
                 android:text="@string/record_label_video_params"
                 android:textColor="@color/textDisableHintDark"
@@ -183,7 +188,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginBottom="5dp"
                 android:text="@string/record_label_audio_params"
                 android:textColor="@color/textDisableHintDark"
@@ -303,9 +308,9 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginBottom="5dp"
-                android:text="其他"
+                android:text="@string/record_label_other_params"
                 android:textColor="@color/textDisableHintDark"
                 android:textSize="@dimen/caption_text_size" />
 

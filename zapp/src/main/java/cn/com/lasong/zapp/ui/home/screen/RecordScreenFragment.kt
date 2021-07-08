@@ -116,7 +116,8 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             binding.llFps,
             binding.llSampleRate,
             binding.llChannel,
-            binding.llAudioBitrate -> {
+            binding.llAudioBitrate,
+            binding.llDelay -> {
                 val key = when (v) {
                     binding.llVideoDirection -> RecordKey.DIRECTION
                     binding.llResolution -> RecordKey.RESOLUTION
@@ -125,6 +126,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                     binding.llSampleRate -> RecordKey.SAMPLE_RATE
                     binding.llChannel -> RecordKey.CHANNEL
                     binding.llAudioBitrate -> RecordKey.AUDIO_BITRATE
+                    binding.llDelay -> RecordKey.DELAY
                     else -> RecordKey.NONE
                 }
                 showRecordOptions(context, key)
@@ -201,5 +203,10 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
 
     private fun startRecord() {
 
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.save()
     }
 }

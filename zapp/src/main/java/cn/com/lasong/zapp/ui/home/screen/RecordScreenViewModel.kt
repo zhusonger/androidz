@@ -41,6 +41,7 @@ class RecordScreenViewModel : ViewModel() {
             RecordKey.SAMPLE_RATE -> value?.audioSampleRate = position
             RecordKey.AUDIO_BITRATE -> value?.audioBitrate = position
             RecordKey.CHANNEL -> value?.audioChannel = position
+            RecordKey.DELAY -> value?.delay = position
             else -> Unit
         }
         params.postValue(value)
@@ -50,5 +51,12 @@ class RecordScreenViewModel : ViewModel() {
         val value = params.value
         value?.audioEnable = checked
         params.postValue(value)
+    }
+
+    fun save() {
+        val json = ZApp.JSON.toJson(params.value)
+        MMKV.defaultMMKV().let {
+            it?.putString(ZApp.KEY_RECORD_SAVE, json)?.apply()
+        }
     }
 }
