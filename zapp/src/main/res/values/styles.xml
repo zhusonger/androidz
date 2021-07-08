@@ -20,6 +20,7 @@
     <style name="RecordLabelStyle.Content">
         <item name="android:textColor">@color/textSecondaryDark</item>
         <item name="android:textSize">@dimen/body_text_size</item>
+        <item name="fontFamily">sans-serif-black</item>
     </style>
 
     <style name="RecordLayoutStyle">

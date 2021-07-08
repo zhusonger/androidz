@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--Video-->
     <string-array name="array_direction">
+        <item>录制时手机方向</item>
         <item>竖屏</item>
         <item>横屏</item>
     </string-array>
@@ -10,10 +12,9 @@
         <item>720p</item>
         <item>480p</item>
         <item>360p</item>
-        <item>240p</item>
     </string-array>
     <string-array name="array_video_bitrate">
-        <item>手机分辨率</item>
+        <item>自动设置</item>
         <item>12Mbps</item>
         <item>8Mbps</item>
         <item>6Mbps</item>
@@ -23,6 +24,17 @@
         <item>1.5Mbps</item>
         <item>1Mbps</item>
     </string-array>
+    <integer-array name="array_video_bitrate_value">
+        <item>0</item>
+        <item>12000000</item>
+        <item>8000000</item>
+        <item>6000000</item>
+        <item>5000000</item>
+        <item>4000000</item>
+        <item>2500000</item>
+        <item>1500000</item>
+        <item>1000000</item>
+    </integer-array>
     <string-array name="array_fps">
         <item>60FPS</item>
         <item>50FPS</item>
@@ -32,13 +44,45 @@
         <item>20FPS</item>
         <item>15FPS</item>
     </string-array>
+    <integer-array name="array_fps_value">
+        <item>60</item>
+        <item>50</item>
+        <item>40</item>
+        <item>30</item>
+        <item>25</item>
+        <item>20</item>
+        <item>15</item>
+    </integer-array>
+
+    <!--Audio-->
     <string-array name="array_sample_rate">
-        <item>48000Hz</item>
-        <item>44100Hz</item>
-        <item>24000Hz</item>
-        <item>22050Hz</item>
-        <item>11025Hz</item>
+        <item>48kHz</item>
+        <item>44.1kHz</item>
+        <item>24kHz</item>
+        <item>22kHz</item>
+        <item>11kHz</item>
     </string-array>
+    <integer-array name="array_sample_rate_value">
+        <item>48000</item>
+        <item>44100</item>
+        <item>24000</item>
+        <item>22050</item>
+        <item>11025</item>
+    </integer-array>
+
+    <string-array name="array_audio_bitrate">
+        <item>96kbps</item>
+        <item>64kbps</item>
+        <item>32kbps</item>
+        <item>16kbps</item>
+    </string-array>
+    <string-array name="array_audio_bitrate_value">
+        <item>96000</item>
+        <item>64000</item>
+        <item>32000</item>
+        <item>16000</item>
+    </string-array>
+
     <string-array name="array_channels">
         <item>单声道(Mono)</item>
         <item>双声道(Stereo)</item>

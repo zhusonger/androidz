@@ -41,3 +41,18 @@ sweep-flag从起点到终点是顺时针还是逆时针画圆弧。
 
     * large-arc-flag, 这个开始理解起来很难, 后来摸索出来, 其实就是当前点到x,y(终点)会画一个圆弧, 如果两个点之间的距离比直径(2个半径)短,
 就会在直线一侧(根据sweep-flag顺/逆时针), 出现一个较大的圆弧, 但如果想要的是对面那个比较小的圆弧呢, 这个参数作用就是这个, 其实可以理解成把对面的画到这边来。 
+
+
+# 分区存储
+
+<https://open.oppomobile.com/wiki/doc#id=10432>
+
+# 编码
+
+* MediaCodec <https://juejin.cn/post/6844903725417365512>
+
+* <https://ragnraok.github.io/android_video_record.html>
+
+* ![video](video.jpeg)
+
+* ![audio](audio.png)
