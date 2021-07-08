@@ -310,11 +310,12 @@
                 android:textSize="@dimen/caption_text_size" />
 
             <LinearLayout
+                android:id="@+id/ll_delay"
                 style="@style/RecordLayoutStyle">
 
                 <TextView
                     style="@style/RecordLabelStyle"
-                    android:text="@string/record_label_delay" />
+                    android:text="@string/record_delay" />
 
                 <Space
                     android:layout_width="0dp"
@@ -322,12 +323,13 @@
                     android:layout_weight="1" />
 
                 <TextView
+                    android:id="@+id/tv_delay"
                     style="@style/RecordLabelStyle.Content"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="25dp"
                     android:fontFamily="sans-serif-medium"
-                    android:text="@string/record_delay" />
+                    tools:text="3s" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

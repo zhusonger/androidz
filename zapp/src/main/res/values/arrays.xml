@@ -87,4 +87,16 @@
         <item>单声道(Mono)</item>
         <item>双声道(Stereo)</item>
     </string-array>
+    <string-array name="array_delay">
+        <item>关闭</item>
+        <item>3s</item>
+        <item>5s</item>
+        <item>10s</item>
+    </string-array>
+    <string-array name="array_delay_value">
+        <item>0</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
 </resources>

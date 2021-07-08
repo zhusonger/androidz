@@ -67,6 +67,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             binding.tvSampleRate.text = it.audioSampleRateDisplay
             binding.tvChannel.text = it.audioChannelDisplay
             binding.tvAudioBitrate.text = it.audioBitrateDisplay
+            binding.tvDelay.text = it.delayDisplay
             if (it.audioEnable) {
                 binding.llAudioParams.visibility = View.VISIBLE
             } else {
@@ -82,6 +83,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
         binding.llSampleRate.setOnClickListener(this)
         binding.llChannel.setOnClickListener(this)
         binding.llAudioBitrate.setOnClickListener(this)
+        binding.llDelay.setOnClickListener(this)
         binding.layoutRecord.setOnClickListener(this)
         ViewHelper.setClickAlpha(binding.layoutRecord)
 
@@ -175,6 +177,11 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                 title = context.getString(R.string.record_channel)
                 array = resources.getStringArray(R.array.array_channels)
                 selectIndex = viewModel.params.value?.audioChannel!!
+            }
+            RecordKey.DELAY -> {
+                title = context.getString(R.string.record_delay)
+                array = resources.getStringArray(R.array.array_delay)
+                selectIndex = viewModel.params.value?.delay!!
             }
             else -> {
                 title = ""

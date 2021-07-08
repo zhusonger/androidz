@@ -9,5 +9,7 @@ enum class RecordKey {
 
     SAMPLE_RATE,
     AUDIO_BITRATE,
-    CHANNEL
+    CHANNEL,
+
+    DELAY
 }

@@ -28,6 +28,5 @@
     <string name="record_label_audio_params">音频参数</string>
     <string name="record_channel_default">单声道</string>
     <string name="record_label_audio_enable">是否开启录音</string>
-    <string name="record_label_delay">倒计时</string>
-    <string name="record_delay">3s</string>
+    <string name="record_delay">录制倒计时</string>
 </resources>

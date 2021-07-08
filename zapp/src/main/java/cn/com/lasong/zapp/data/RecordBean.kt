@@ -71,6 +71,8 @@ class RecordBean {
     var audioBitrate = 1 // bitrate index
     var audioChannel = 0 // channel index 单双声道
 
+    var delay = 0 // 录制开始倒计时
+
     val freeSizeDisplay : String
         get() {
             return when {
@@ -190,5 +192,16 @@ class RecordBean {
                 1 -> AudioFormat.CHANNEL_IN_STEREO
                 else -> AudioFormat.CHANNEL_IN_MONO
             }
+        }
+
+    val delayDisplay : String
+        get() {
+            val array = applicationContext().resources.getStringArray(R.array.array_delay)
+            return array[delay]
+        }
+    val delayValue : Int
+        get() {
+            val array = applicationContext().resources.getIntArray(R.array.array_delay_value)
+            return array[delay]
         }
 }
