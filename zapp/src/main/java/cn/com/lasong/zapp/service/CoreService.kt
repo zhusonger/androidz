@@ -1,4 +1,4 @@
-package cn.com.lasong.zapp
+package cn.com.lasong.zapp.service
 
 import android.app.Service
 import android.content.Intent
@@ -13,7 +13,7 @@ import android.os.*
  * 核心服务
  */
 
-class CoreService : Service(), Handler.Callback {
+open class CoreService : Service() {
 
     companion object {
         /**
@@ -21,14 +21,14 @@ class CoreService : Service(), Handler.Callback {
          * from the service.  The Message's replyTo field must be a Messenger of
          * the client where callbacks should be sent.
          */
-        const val MSG_REGISTER_CLIENT = 1
+        const val MSG_REGISTER_CLIENT = Integer.MAX_VALUE
 
         /**
          * Command to the service to unregister a client, ot stop receiving callbacks
          * from the service.  The Message's replyTo field must be a Messenger of
          * the client as previously given with MSG_REGISTER_CLIENT.
          */
-        const val MSG_UNREGISTER_CLIENT = 2
+        const val MSG_UNREGISTER_CLIENT = Integer.MAX_VALUE - 1
 
         /**
          * 回复OK表示成功
@@ -37,9 +37,11 @@ class CoreService : Service(), Handler.Callback {
     }
 
     /** Keeps track of all current registered clients.  */
-    var mClients = ArrayList<Messenger>()
+    private val mClients = ArrayList<Messenger>()
 
-    private val handler = Handler(this)
+    private val callback = Handler.Callback { msg -> handleMessage(msg) }
+
+    private val handler = Handler(callback)
     /**
      * Target we publish for clients to send messages to IncomingHandler.
      */
@@ -71,7 +73,7 @@ class CoreService : Service(), Handler.Callback {
     }
 
     /**   实际业务功能↓   **/
-    override fun handleMessage(msg: Message): Boolean {
+    open fun handleMessage(msg: Message): Boolean {
         when (msg.what) {
             MSG_REGISTER_CLIENT -> {
                 mClients.add(msg.replyTo)

@@ -1,11 +1,10 @@
 package cn.com.lasong.zapp.base
 
 import android.content.ComponentName
-import android.content.Intent
 import android.content.ServiceConnection
 import android.os.*
 import cn.com.lasong.utils.ILog
-import cn.com.lasong.zapp.CoreService
+import cn.com.lasong.zapp.service.CoreService
 
 /**
  * Author: zhusong
@@ -17,8 +16,8 @@ import cn.com.lasong.zapp.CoreService
 open class CoreActivity : AppBaseActivity() {
 
     protected var mService: Messenger? = null
-    private var bound = false
-    private val connection = object : ServiceConnection {
+    protected var bound = false
+    protected val connection = object : ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             mService = Messenger(service)
@@ -53,14 +52,7 @@ open class CoreActivity : AppBaseActivity() {
     /**
      * Target we publish for clients to send messages to IncomingHandler.
      */
-    private val mMessenger: Messenger = Messenger(handler)
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Intent(this, CoreService::class.java).also { intent->
-            bindService(intent, connection, BIND_AUTO_CREATE)
-        }
-    }
+    protected val mMessenger: Messenger = Messenger(handler)
 
     override fun onDestroy() {
         super.onDestroy()
@@ -82,6 +74,14 @@ open class CoreActivity : AppBaseActivity() {
             }
             unbindService(connection)
             bound = false
+        }
+    }
+
+    /*  发送消息到service */
+    open fun sendMessage(msg: Message) {
+        if (bound) {
+            msg.replyTo = mMessenger
+            mService!!.send(msg)
         }
     }
 

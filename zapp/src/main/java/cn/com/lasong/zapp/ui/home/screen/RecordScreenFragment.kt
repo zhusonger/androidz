@@ -4,19 +4,23 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Message
 import android.os.storage.StorageManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import cn.com.lasong.base.BaseFragment
 import cn.com.lasong.widget.utils.ViewHelper
+import cn.com.lasong.zapp.MainActivity
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.RecordKey
 import cn.com.lasong.zapp.databinding.FragmentRecordScreenBinding
+import cn.com.lasong.zapp.service.RecordService
 import cn.com.lasong.zapp.ui.home.OptionDialog
 
 /**
@@ -97,6 +101,11 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
     override fun onReStart() {
         super.onReStart()
         viewModel.updateFreeSize()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.save()
     }
 
     override fun onClick(v: View) {
@@ -202,11 +211,10 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
     }
 
     private fun startRecord() {
-
-    }
-
-    override fun onStop() {
-        super.onStop()
-        viewModel.save()
+        findNavController().
+        val activity: MainActivity = activity as MainActivity
+        val msg: Message = Message.obtain(null,
+            RecordService.MSG_SCREEN_RECORD)
+        activity.sendMessage(msg)
     }
 }
