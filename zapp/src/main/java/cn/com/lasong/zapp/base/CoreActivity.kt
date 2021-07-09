@@ -17,6 +17,17 @@ open class CoreActivity : AppBaseActivity() {
 
     protected var mService: Messenger? = null
     protected var bound = false
+
+
+    protected val handler = Handler(Handler.Callback { msg ->
+        return@Callback handleMessage(msg)
+    })
+
+    /**
+     * Target we publish for clients to send messages to IncomingHandler.
+     */
+    protected val mMessenger: Messenger = Messenger(handler)
+
     protected val connection = object : ServiceConnection {
 
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -28,7 +39,7 @@ open class CoreActivity : AppBaseActivity() {
             // We want to monitor the service for as long as we are
             // connected to it.
             try {
-                val msg: Message = Message.obtain(null,
+                val msg: Message = Message.obtain(handler,
                         CoreService.MSG_REGISTER_CLIENT)
                 msg.replyTo = mMessenger
                 mService!!.send(msg)
@@ -46,13 +57,6 @@ open class CoreActivity : AppBaseActivity() {
             bound = false
         }
     }
-    private val handler = Handler(Handler.Callback { msg ->
-        return@Callback handleMessage(msg)
-    })
-    /**
-     * Target we publish for clients to send messages to IncomingHandler.
-     */
-    protected val mMessenger: Messenger = Messenger(handler)
 
     override fun onDestroy() {
         super.onDestroy()
@@ -63,7 +67,7 @@ open class CoreActivity : AppBaseActivity() {
             // unregister client
             if (mService != null) {
                 try {
-                    val msg: Message = Message.obtain(null,
+                    val msg: Message = Message.obtain(handler,
                             CoreService.MSG_UNREGISTER_CLIENT)
                     msg.replyTo = mMessenger
                     mService!!.send(msg)

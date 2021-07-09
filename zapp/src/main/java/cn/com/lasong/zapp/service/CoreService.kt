@@ -41,7 +41,7 @@ open class CoreService : Service() {
 
     private val callback = Handler.Callback { msg -> handleMessage(msg) }
 
-    private val handler = Handler(callback)
+    protected val handler = Handler(callback)
     /**
      * Target we publish for clients to send messages to IncomingHandler.
      */
@@ -59,7 +59,7 @@ open class CoreService : Service() {
     /**
      * 通知客户端
      */
-    private fun notifyClients(msg: Message) {
+    fun sendMessage(msg: Message) {
         for (i in mClients.indices.reversed()) {
             try {
                 mClients[i].send(msg)
@@ -80,13 +80,13 @@ open class CoreService : Service() {
                 val replayMsg = Message.obtain(handler)
                 replayMsg.what = MSG_REGISTER_CLIENT
                 replayMsg.obj = RES_OK
-                notifyClients(replayMsg)
+                this.sendMessage(replayMsg)
             }
             MSG_UNREGISTER_CLIENT -> {
                 val replayMsg = Message.obtain(handler)
                 replayMsg.what = MSG_UNREGISTER_CLIENT
                 replayMsg.obj = RES_OK
-                notifyClients(replayMsg)
+                this.sendMessage(replayMsg)
                 mClients.remove(msg.replyTo)
             }
         }

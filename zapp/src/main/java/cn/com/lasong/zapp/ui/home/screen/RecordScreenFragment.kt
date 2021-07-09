@@ -4,23 +4,22 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.os.Message
 import android.os.storage.StorageManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.findNavController
+import androidx.fragment.app.activityViewModels
 import cn.com.lasong.base.BaseFragment
+import cn.com.lasong.utils.TN
 import cn.com.lasong.widget.utils.ViewHelper
-import cn.com.lasong.zapp.MainActivity
+import cn.com.lasong.zapp.MainViewModel
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.RecordKey
+import cn.com.lasong.zapp.data.RecordState
 import cn.com.lasong.zapp.databinding.FragmentRecordScreenBinding
-import cn.com.lasong.zapp.service.RecordService
 import cn.com.lasong.zapp.ui.home.OptionDialog
 
 /**
@@ -32,16 +31,19 @@ import cn.com.lasong.zapp.ui.home.OptionDialog
  */
 class RecordScreenFragment : BaseFragment(), View.OnClickListener {
 
-    private lateinit var viewModel: RecordScreenViewModel
+//    private lateinit var viewModel: RecordScreenViewModel
 
     private lateinit var binding: FragmentRecordScreenBinding
+
+    // 共享的VM
+    private val viewModel : MainViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        viewModel = ViewModelProvider(this).get(RecordScreenViewModel::class.java)
+    ): View {
+//        viewModel = ViewModelProvider(this).get(RecordScreenViewModel::class.java)
         binding = FragmentRecordScreenBinding.inflate(layoutInflater, container, false)
         viewModel.params.observe(viewLifecycleOwner, {
             binding.tvFreeSize.text = it.freeSizeDisplay
@@ -94,7 +96,6 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
         binding.stAudio.setOnCheckedChangeListener { _, isChecked ->
             viewModel.setAudioEnable(isChecked)
         }
-
         return binding.root
     }
 
@@ -211,10 +212,11 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
     }
 
     private fun startRecord() {
-        findNavController().
-        val activity: MainActivity = activity as MainActivity
-        val msg: Message = Message.obtain(null,
-            RecordService.MSG_SCREEN_RECORD)
-        activity.sendMessage(msg)
+        val state = viewModel.currentState.value!!
+        if (state == RecordState.RUNNING || state == RecordState.READY) {
+            TN.show("正在录制中, 先停止当前录制")
+            return
+        }
+        viewModel.targetState.value = RecordState.READY
     }
 }

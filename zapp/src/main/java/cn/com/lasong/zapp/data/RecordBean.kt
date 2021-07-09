@@ -3,11 +3,13 @@ package cn.com.lasong.zapp.data
 import android.media.AudioFormat
 import android.os.Build
 import android.os.Environment
+import android.os.Parcelable
 import android.os.StatFs
 import android.os.storage.StorageManager
 import androidx.core.content.getSystemService
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
+import kotlinx.parcelize.Parcelize
 import java.io.File
 import java.util.*
 
@@ -18,9 +20,25 @@ import java.util.*
  * Date: 2021/6/15
  * Description:
  */
-class RecordBean {
+@Parcelize
+class RecordBean(var saveDir: String?,
+                 private var _appFreeSize: Long = 0,// video direction
+                 var videoDirection: Int = 0,// resolution index
+                 var videoResolution: Int = 0,// bitrate index
+                 var videoBitrate: Int = 0,// FPS index
+                 var videoFps: Int = 3,// enable audio
+                 var audioEnable: Boolean = true,// sample rate index
+                 var audioSampleRate: Int = 1,// bitrate index
+                 var audioBitrate: Int = 1,// channel index 单双声道
+                 var audioChannel: Int = 0,// 录制开始倒计时
+                 var delay: Int = 0
+) : Parcelable {
 
-    data class Video(val index: Int, var width: Int, var height: Int, var bitrate: Int)
+    constructor() : this(null)
+
+    @Parcelize
+    data class Video(val index: Int, var width: Int, var height: Int, var bitrate: Int) : Parcelable
+
     companion object {
         // 空间
         const val SIZE_1_KB = 1024
@@ -44,13 +62,17 @@ class RecordBean {
 
     }
 
-    // save dir
-    var saveDir: String = applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath!!
-    var appFreeSize: Long = 0 // free size
+    init {
+        // save dir
+        saveDir = applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath
+    }
+
+
+    var appFreeSize: Long  // free size
         get() {
-            field = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            _appFreeSize = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val storageManager = applicationContext().getSystemService<StorageManager>()!!
-                val appSpecificInternalDirUuid: UUID = storageManager.getUuidForPath(File(saveDir))
+                val appSpecificInternalDirUuid: UUID = storageManager.getUuidForPath(File(saveDir!!))
                 storageManager.getAllocatableBytes(appSpecificInternalDirUuid)
             } else {
                 val stat = StatFs(saveDir)
@@ -58,20 +80,11 @@ class RecordBean {
                 val totalBlocks = stat.blockCountLong
                 totalBlocks * blockSize
             }
-            return field
+            return _appFreeSize
         }
-    var videoDirection = 0 // video direction
-
-    var videoResolution = 0 // resolution index
-    var videoBitrate = 0 // bitrate index
-    var videoFps = 3 // FPS index
-
-    var audioEnable = true // enable audio
-    var audioSampleRate = 1 // sample rate index
-    var audioBitrate = 1 // bitrate index
-    var audioChannel = 0 // channel index 单双声道
-
-    var delay = 0 // 录制开始倒计时
+        set(value) {
+            _appFreeSize = value
+        }
 
     val freeSizeDisplay : String
         get() {
@@ -97,22 +110,6 @@ class RecordBean {
             val array = applicationContext().resources.getStringArray(R.array.array_direction)
             return array[videoDirection]
         }
-
-//    val videoWidth : Int
-//        get() {
-//            return when(videoDirection) {
-//                DIRECTION_VERTICAL -> videoResolution.second
-//                else -> videoResolution.first
-//            }
-//        }
-//
-//    val videoHeight : Int
-//        get() {
-//            return when(videoDirection) {
-//                DIRECTION_VERTICAL -> videoResolution.first
-//                else -> videoResolution.second
-//            }
-//        }
 
     val videoResolutionDisplay : String
         get() {
