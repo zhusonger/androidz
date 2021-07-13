@@ -1,12 +1,16 @@
 package cn.com.lasong.zapp
 
 import android.content.Intent
+import android.os.SystemClock
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.RecordKey
 import cn.com.lasong.zapp.data.RecordState
 import com.tencent.mmkv.MMKV
+import java.util.*
+
 
 /**
  * Author: zhusong
@@ -20,9 +24,7 @@ open class MainViewModel : ViewModel() {
     val currentState = MutableLiveData(RecordState.IDLE)
     // 目标状态, 走录制的流程
     val targetState = MutableLiveData(RecordState.IDLE)
-
-    val requestCapture = MutableLiveData(false)
-
+    // 请求系统录屏返回的Intent
     val captureResult = MutableLiveData<Intent?>()
 
     val params = MutableLiveData<RecordBean>().apply {
@@ -35,6 +37,9 @@ open class MainViewModel : ViewModel() {
             value = value ?: RecordBean()
         }
     }
+
+    // 录制经过的时长 单位s
+    val elapsedTimeMs = MutableLiveData(0L)
 
     fun updateFreeSize() {
         val value = params.value
@@ -68,5 +73,32 @@ open class MainViewModel : ViewModel() {
         MMKV.defaultMMKV().let {
             it?.putString(ZApp.KEY_RECORD_SAVE, json)?.apply()
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        timer?.cancel()
+        timer = null
+    }
+
+    private var timer: Timer? = null
+
+    fun startTimer(startTime: Long) {
+        val current = SystemClock.elapsedRealtime()
+        val start = if (startTime > 0) {
+            startTime
+        } else {
+            current
+        }
+        elapsedTimeMs.value = (current - start) / 1000
+        timer?.cancel()
+        timer = Timer()
+        timer?.scheduleAtFixedRate(object : TimerTask() {
+            override fun run() {
+                val newValue: Long = (SystemClock.elapsedRealtime() - start) / 1000
+                ILog.d("elapsedTime : $newValue")
+                elapsedTimeMs.postValue(newValue)
+            }
+        }, 1000L, 1000L)
     }
 }

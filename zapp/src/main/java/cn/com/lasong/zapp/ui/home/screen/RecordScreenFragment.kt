@@ -31,7 +31,6 @@ import cn.com.lasong.zapp.ui.home.OptionDialog
  */
 class RecordScreenFragment : BaseFragment(), View.OnClickListener {
 
-//    private lateinit var viewModel: RecordScreenViewModel
 
     private lateinit var binding: FragmentRecordScreenBinding
 
@@ -43,7 +42,6 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-//        viewModel = ViewModelProvider(this).get(RecordScreenViewModel::class.java)
         binding = FragmentRecordScreenBinding.inflate(layoutInflater, container, false)
         viewModel.params.observe(viewLifecycleOwner, {
             binding.tvFreeSize.text = it.freeSizeDisplay
@@ -96,6 +94,30 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
         binding.stAudio.setOnCheckedChangeListener { _, isChecked ->
             viewModel.setAudioEnable(isChecked)
         }
+
+        viewModel.currentState.observe(viewLifecycleOwner, {
+            when (it) {
+                RecordState.IDLE -> {
+                    binding.layoutRecord.isEnabled = true
+                }
+                RecordState.READY -> {
+                    binding.layoutRecord.isEnabled = false
+                }
+                // 1.4 启动完成, 更新UI为运行中
+                RecordState.RUNNING -> {
+                    binding.layoutRecord.isEnabled = true
+                    binding.tvRecord.isSelected = true
+                }
+                RecordState.STOP -> {
+                    binding.layoutRecord.isEnabled = false
+                    binding.tvRecord.isSelected = false
+                }
+            }
+        })
+
+        viewModel.elapsedTimeMs.observe(viewLifecycleOwner, {
+
+        })
         return binding.root
     }
 

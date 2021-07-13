@@ -45,23 +45,25 @@ class MainActivity : CoreActivity() {
         binding.navView.setupWithNavController(navController)
         viewModel.targetState.observe(this, {
             when (it) {
+                // 1.1! 查询是否正在录制
                 RecordState.READY -> {
                     viewModel.currentState.value = RecordState.READY
-                    // 1.1 查询是否正在录制
                     sendMessage(Message.obtain(handler, RecordService.MSG_QUERY_RECORD))
                 }
+                // 1.3! 开始录制
                 RecordState.START -> {
                     viewModel.currentState.value = RecordState.START
-                    // 1.3 开始录制
                     val message = Message.obtain(handler, RecordService.MSG_RECORD_START)
                     val data = viewModel.captureResult.value ?: Intent()
                     data.putExtra(RecordService.KEY_RECORD_PARAMS, viewModel.params.value)
                     message.obj = data
                     sendMessage(message)
                 }
+                // 1.4 启动完成, 更新UI为运行中
                 RecordState.RUNNING -> {
                     viewModel.currentState.value = RecordState.RUNNING
-                    // 1.4 
+                    // 把服务设置成跟activity无关
+                    startService(Intent(this, RecordService::class.java))
                 }
                 RecordState.STOP -> {
                     viewModel.currentState.value = RecordState.STOP
@@ -89,10 +91,27 @@ class MainActivity : CoreActivity() {
 
     override fun handleMessage(msg: Message): Boolean {
         when(msg.what) {
+            // 进入时查询当前状态
+            CoreService.MSG_REGISTER_CLIENT -> {
+                val message = Message.obtain(handler, RecordService.MSG_PRE_RECORD)
+                sendMessage(message)
+            }
+            // 返回当前状态, 如果正在录制, 就同步下状态
+            RecordService.MSG_PRE_RECORD -> {
+                val map = msg.obj as Map<*, *>
+                val recording  = map[RecordService.KEY_RECORDING] as Boolean
+                val startTime = map[RecordService.KEY_RECORD_START_TIME] as Long
+                if (recording) {
+                    viewModel.targetState.value = RecordState.RUNNING
+                    viewModel.startTimer(startTime)
+                }
+            }
+            // 1.2! 查询到当前状态
             RecordService.MSG_QUERY_RECORD -> {
                 val map = msg.obj as Map<*, *>
                 val recording  = map[RecordService.KEY_RECORDING] as Boolean
                 val mediaProjectionNull = map[RecordService.KEY_MEDIA_PROJECTION_NULL] as Boolean
+                val startTime = map[RecordService.KEY_RECORD_START_TIME] as Long
                 // 1.2.1 如果不在录制且没有录制对象, 请求录制权限
                 if (!recording && mediaProjectionNull) {
                     mCaptureLauncher.launch(null)
@@ -101,11 +120,20 @@ class MainActivity : CoreActivity() {
                 else if (!recording && !mediaProjectionNull) {
                     viewModel.targetState.value = RecordState.START
                 }
-            }
-            RecordService.MSG_RECORD_START -> {
-                val data = msg.obj as String
-                if (data == CoreService.RES_OK) {
+                // 1.2.3 正在录制, 同步下状态即可
+                else if (recording) {
                     viewModel.targetState.value = RecordState.RUNNING
+                    viewModel.startTimer(startTime)
+                }
+            }
+            // 1.4! 启动完成, 更新为运行中
+            RecordService.MSG_RECORD_START -> {
+                val result = msg.obj as String
+                if (result == CoreService.RES_OK) {
+                    val data = msg.data
+                    val startTime = data.getLong(RecordService.KEY_RECORD_START_TIME)
+                    viewModel.targetState.value = RecordState.RUNNING
+                    viewModel.startTimer(startTime)
                 }
             }
         }

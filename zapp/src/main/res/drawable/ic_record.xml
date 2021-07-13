@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:state_selected="true">
+    <item android:state_checked="false" android:state_selected="true">
+        <vector android:width="24dp"
+            android:height="24dp"
+            android:viewportWidth="24.0"
+            android:viewportHeight="24.0">
+            <path android:fillColor="@android:color/holo_red_dark"
+                android:pathData="M2,2h20v20h-20v-20z" />
+        </vector>
+    </item>
+
+    <item android:state_checked="true" android:state_selected="true">
         <vector android:width="24dp" android:height="24dp" android:viewportWidth="24.0" android:viewportHeight="24.0">
             <path android:fillColor="#ffffff" android:pathData="
                 M6,12v -11 a1,1 0 0 1 1,0 L22.5,11A1,1 0 0 1 23,12z

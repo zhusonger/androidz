@@ -30,4 +30,7 @@
     <string name="record_label_audio_enable">是否开启录音</string>
     <string name="record_delay">录制倒计时</string>
     <string name="record_label_other_params">其他</string>
+    <string name="notification_record_screen_name">屏幕录制</string>
+    <string name="notification_record_description">用于录制视频功能</string>
+    <string name="notification_text_content">正在录制视频, 点击打开应用</string>
 </resources>
