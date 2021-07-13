@@ -59,15 +59,22 @@ class MainActivity : CoreActivity() {
                     message.obj = data
                     sendMessage(message)
                 }
-                // 1.4 启动完成, 更新UI为运行中
+                // 1.4! 启动完成, 更新UI为运行中
                 RecordState.RUNNING -> {
                     viewModel.currentState.value = RecordState.RUNNING
                     // 把服务设置成跟activity无关
                     startService(Intent(this, RecordService::class.java))
                 }
+                // 1.5! 停止录制
                 RecordState.STOP -> {
                     viewModel.currentState.value = RecordState.STOP
-                    // 1.5
+                    val message = Message.obtain(handler, RecordService.MSG_RECORD_STOP)
+                    sendMessage(message)
+                }
+                // 1.6! 默认状态
+                RecordState.IDLE -> {
+                    // 在service里已经stop掉了, 不需要再次调用stopService
+                    viewModel.currentState.value = RecordState.IDLE
                 }
             }
         })
@@ -134,6 +141,14 @@ class MainActivity : CoreActivity() {
                     val startTime = data.getLong(RecordService.KEY_RECORD_START_TIME)
                     viewModel.targetState.value = RecordState.RUNNING
                     viewModel.startTimer(startTime)
+                }
+            }
+            // 1.5! 已经停止完成, 设置为闲置状态
+            RecordService.MSG_RECORD_STOP -> {
+                val result = msg.obj as String
+                if (result == CoreService.RES_OK) {
+                    viewModel.targetState.value = RecordState.IDLE
+                    viewModel.stopTimer()
                 }
             }
         }

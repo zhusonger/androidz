@@ -1,6 +1,7 @@
 package cn.com.lasong.zapp.ui.home.screen
 
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -11,7 +12,6 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import cn.com.lasong.base.BaseFragment
-import cn.com.lasong.utils.TN
 import cn.com.lasong.widget.utils.ViewHelper
 import cn.com.lasong.zapp.MainViewModel
 import cn.com.lasong.zapp.R
@@ -20,6 +20,7 @@ import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.RecordKey
 import cn.com.lasong.zapp.data.RecordState
 import cn.com.lasong.zapp.databinding.FragmentRecordScreenBinding
+import cn.com.lasong.zapp.ui.all.ConfirmDialog
 import cn.com.lasong.zapp.ui.home.OptionDialog
 
 /**
@@ -99,11 +100,11 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             when (it) {
                 RecordState.IDLE -> {
                     binding.layoutRecord.isEnabled = true
+                    binding.tvRecord.isSelected = false
                 }
                 RecordState.READY -> {
                     binding.layoutRecord.isEnabled = false
                 }
-                // 1.4 启动完成, 更新UI为运行中
                 RecordState.RUNNING -> {
                     binding.layoutRecord.isEnabled = true
                     binding.tvRecord.isSelected = true
@@ -113,10 +114,6 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                     binding.tvRecord.isSelected = false
                 }
             }
-        })
-
-        viewModel.elapsedTimeMs.observe(viewLifecycleOwner, {
-
         })
         return binding.root
     }
@@ -236,7 +233,13 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
     private fun startRecord() {
         val state = viewModel.currentState.value!!
         if (state == RecordState.RUNNING || state == RecordState.READY) {
-            TN.show("正在录制中, 先停止当前录制")
+            ConfirmDialog.newInstance(context = requireActivity(),
+                content = getString(R.string.record_confirm_content_recording),
+                listener = { _, which ->
+                if (which == DialogInterface.BUTTON_POSITIVE) {
+                    viewModel.targetState.value = RecordState.STOP
+                }
+            }).show()
             return
         }
         viewModel.targetState.value = RecordState.READY

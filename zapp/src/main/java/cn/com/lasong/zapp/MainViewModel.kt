@@ -101,4 +101,8 @@ open class MainViewModel : ViewModel() {
             }
         }, 1000L, 1000L)
     }
+
+    fun stopTimer() {
+        timer?.cancel()
+    }
 }

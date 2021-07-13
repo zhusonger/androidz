@@ -29,6 +29,7 @@ class RecordService : CoreService() {
         const val MSG_QUERY_RECORD = 0
         const val MSG_RECORD_START = 1
         const val MSG_PRE_RECORD = 2
+        const val MSG_RECORD_STOP = 3
 
         const val KEY_RECORDING = "recording"
         const val KEY_MEDIA_PROJECTION_NULL = "mediaProjection_null"
@@ -76,8 +77,17 @@ class RecordService : CoreService() {
                 }
                 startRecord()
             }
-            MSG_UNREGISTER_CLIENT -> {
-                stopRecord()
+            // 3. 停止录制
+            MSG_RECORD_STOP -> {
+                isRecording = false
+                elapsedStartTimeMs = 0
+                params = null
+                stopForeground(true)
+                stopSelf()
+                // 发送消息到客户端
+                val message = Message.obtain(handler, MSG_RECORD_STOP)
+                message.obj = RES_OK
+                sendMessage(message)
             }
         }
         return super.handleMessage(msg)
@@ -112,6 +122,7 @@ class RecordService : CoreService() {
             // below sequence.
             val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(notificationChannel)
+
         }
         val intent = Intent(Intent.ACTION_MAIN)
         intent.addCategory(Intent.CATEGORY_LAUNCHER)

@@ -33,4 +33,8 @@
     <string name="notification_record_screen_name">屏幕录制</string>
     <string name="notification_record_description">用于录制视频功能</string>
     <string name="notification_text_content">正在录制视频, 点击打开应用</string>
+    <string name="cancel">取消</string>
+    <string name="ok">确定</string>
+    <string name="title_default">提醒</string>
+    <string name="record_confirm_content_recording">当前正在录制中, 确认关闭本次录制?</string>
 </resources>
