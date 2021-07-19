@@ -6,6 +6,8 @@
     <color name="colorContent">#4BD7EA</color>
     <color name="colorError">#E02020</color>
 
+    <color name="ic_launcher_background">@color/colorPrimaryDark</color>
+
     <color name="textPrimary">#FFFFFF</color>
     <color name="textSecondary">#B3FFFFFF</color>
     <color name="textDisableHint">#80FFFFFF</color>
