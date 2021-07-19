@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import cn.com.lasong.zapp.MainActivity
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.data.RecordBean
+import cn.com.lasong.zapp.data.copy
 
 
 /**
@@ -73,7 +74,8 @@ class RecordService : CoreService() {
                 }
 
                 if (resultData.hasExtra(KEY_RECORD_PARAMS)) {
-                    params = resultData.getParcelableExtra(KEY_RECORD_PARAMS) as RecordBean
+                    val params = resultData.getParcelableExtra(KEY_RECORD_PARAMS) as RecordBean
+                    this.params = params.copy()
                 }
                 startRecord()
             }

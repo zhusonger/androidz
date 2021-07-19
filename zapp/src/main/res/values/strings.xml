@@ -37,4 +37,6 @@
     <string name="ok">确定</string>
     <string name="title_default">提醒</string>
     <string name="record_confirm_content_recording">当前正在录制中, 确认关闭本次录制?</string>
+    <string name="record_permission_audio_not_grant">获取录音权限失败, 请先开启麦克风权限</string>
+    <string name="record_permission_dialog_ok">开启</string>
 </resources>

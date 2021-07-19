@@ -10,6 +10,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.base.CoreActivity
 import cn.com.lasong.zapp.base.contract.MediaProjectRequest
 import cn.com.lasong.zapp.data.RecordState
@@ -75,6 +76,10 @@ class MainActivity : CoreActivity() {
                 RecordState.IDLE -> {
                     // 在service里已经stop掉了, 不需要再次调用stopService
                     viewModel.currentState.value = RecordState.IDLE
+                }
+                // do nothing
+                else -> {
+                    ILog.d("targetState : $it")
                 }
             }
         })

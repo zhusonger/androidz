@@ -1,18 +1,24 @@
 package cn.com.lasong.zapp.ui.home.screen
 
+import android.Manifest
+import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.storage.StorageManager
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import cn.com.lasong.base.BaseFragment
+import cn.com.lasong.utils.ILog
 import cn.com.lasong.widget.utils.ViewHelper
+import cn.com.lasong.zapp.BuildConfig
 import cn.com.lasong.zapp.MainViewModel
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
@@ -21,7 +27,7 @@ import cn.com.lasong.zapp.data.RecordKey
 import cn.com.lasong.zapp.data.RecordState
 import cn.com.lasong.zapp.databinding.FragmentRecordScreenBinding
 import cn.com.lasong.zapp.ui.all.ConfirmDialog
-import cn.com.lasong.zapp.ui.home.OptionDialog
+import cn.com.lasong.zapp.ui.all.OptionDialog
 
 /**
  * Author: zhusong
@@ -112,6 +118,10 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                 RecordState.STOP -> {
                     binding.layoutRecord.isEnabled = false
                     binding.tvRecord.isSelected = false
+                }
+                // do nothing
+                else -> {
+                    ILog.d("currentState : $it")
                 }
             }
         })
@@ -225,8 +235,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             title,
             array,
             selectIndex
-        )
-        { _, position -> viewModel.updateVideo(key, position) }
+        ) { _, position -> viewModel.updateVideo(key, position) }
             .show()
     }
 
@@ -240,6 +249,31 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                     viewModel.targetState.value = RecordState.STOP
                 }
             }).show()
+            return
+        }
+
+        val params = viewModel.params.value!!
+        if (params.audioEnable) {
+            // 先检查是否录音, 录音先请求录音权限
+            requestPermissions(
+                { isGrant, _ ->
+                    if (isGrant) {
+                        viewModel.targetState.value = RecordState.READY
+                    } else {
+                        // 未授权, 弹出弹窗方便可以再次跳转到权限设置
+                        val dialog = AlertDialog.Builder(activity).setTitle(R.string.title_default)
+                            .setMessage(R.string.record_permission_audio_not_grant)
+                            .setPositiveButton(R.string.record_permission_dialog_ok) { _, _ ->
+                                val uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}")
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri)
+                                startActivity(intent);
+                            }
+                            .setNegativeButton(R.string.cancel, null)
+                            .create()
+                        dialog.show()
+                    }
+                },
+                Manifest.permission.RECORD_AUDIO)
             return
         }
         viewModel.targetState.value = RecordState.READY

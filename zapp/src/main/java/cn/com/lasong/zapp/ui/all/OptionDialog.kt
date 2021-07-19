@@ -1,4 +1,4 @@
-package cn.com.lasong.zapp.ui.home
+package cn.com.lasong.zapp.ui.all
 
 import android.content.Context
 import android.os.Bundle
@@ -25,7 +25,7 @@ class OptionDialog(context: Context) : BottomSheetDialog(context, R.style.ZBotto
             title: String,
             options: Array<String>,
             selectedIndex: Int = 0,
-            listener: OnItemClickListener? = null
+            listener: OnItemClickListener? = null,
         ): OptionDialog {
             val dialog = OptionDialog(context)
             dialog.title = title
