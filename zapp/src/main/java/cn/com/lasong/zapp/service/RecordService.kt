@@ -146,6 +146,7 @@ class RecordService : CoreService() {
     private fun startRecord() {
         elapsedStartTimeMs = SystemClock.elapsedRealtime()
 
+
         // 发送成功消息到客户端
         val message = Message.obtain(handler, MSG_RECORD_START)
         val data = Bundle()
