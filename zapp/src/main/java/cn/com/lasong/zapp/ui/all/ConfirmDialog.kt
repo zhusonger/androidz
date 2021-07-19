@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import cn.com.lasong.widget.dialog.ZBottomSheetDialog
+import cn.com.lasong.widget.utils.ViewHelper
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 import cn.com.lasong.zapp.databinding.DialogConfirmBinding
@@ -47,5 +48,7 @@ class ConfirmDialog (context: Context) : ZBottomSheetDialog(context) {
             dismiss()
             listener?.onClick(this, DialogInterface.BUTTON_POSITIVE)
         }
+        ViewHelper.setClickAlpha(binding.tvCancel)
+        ViewHelper.setClickAlpha(binding.tvOk)
     }
 }
