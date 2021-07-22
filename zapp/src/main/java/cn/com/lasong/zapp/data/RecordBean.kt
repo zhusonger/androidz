@@ -40,15 +40,24 @@ class RecordBean(var saveDir: String?,
 
     @Parcelize
     data class Video(val index: Int, var _width: Int, var _height: Int, var bitrate: Int) : Parcelable {
+        // 做16位对齐
         @IgnoredOnParcel
         val width: Int
             get(){
+                val offset = _width % 16
+                if (offset != 0) {
+                    return _width + (16 - offset)
+                }
                 return _width
             }
 
         @IgnoredOnParcel
         val height: Int
             get(){
+                val offset = _height % 16
+                if (offset != 0) {
+                    return _height + (16 - offset)
+                }
                 return _height
             }
     }

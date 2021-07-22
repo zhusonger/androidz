@@ -1,12 +1,11 @@
 package cn.com.lasong.zapp.service.muxer
 
-import android.media.MediaCodec
-import android.media.MediaCodecInfo
-import android.media.MediaFormat
 import android.media.MediaMuxer
-import android.os.Build
-import android.view.Surface
+import cn.com.lasong.utils.ILog
+import cn.com.lasong.utils.TN
+import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.data.RecordBean
+import kotlinx.coroutines.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -17,20 +16,39 @@ import java.util.*
  * Date: 2021/7/22
  * Description:
  */
-class Mpeg4Muxer : MediaCodec.Callback() {
+class Mpeg4Muxer {
+
+    companion object {
+        const val FLAG_IDLE = 0
+        const val FLAG_AUDIO = 1
+        const val FLAG_VIDEO = 2
+    }
+    // 协程域, SupervisorJob 一个子协程出错, 不会影响其他的子协程, Job会传递错误
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     // 视频合成器
     private lateinit var muxer: MediaMuxer
-    // 视频编码器
-    private lateinit var videoEncoder: MediaCodec
-    // 音频编码器
-    private var audioEncoder: MediaCodec? = null
+
     // 录制文件路径
     private lateinit var path: String
+
     // 录制参数
     private lateinit var params: RecordBean
-    // 编码器输入surface
-    private lateinit var surface: Surface
 
+    private var audioCapture: AudioCapture? = null
+    private var videoCapture: VideoCapture? = null
+
+    // 合成
+    private var muxerFlag = FLAG_IDLE
+
+    /*判断音频/视频是否启动*/
+    fun isStart(flag: Int) : Boolean {
+        return (muxerFlag and flag) == flag
+    }
+
+    /**
+     * 开始录制并合成MP4文件
+     */
     fun start(params: RecordBean) {
         this.params = params
         val simpleDateFormat = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
@@ -40,87 +58,42 @@ class Mpeg4Muxer : MediaCodec.Callback() {
         path = file.absolutePath
         muxer = MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
 
-        // 1.音频编码器
+        // 音频
         if (params.audioEnable) {
-            val format = MediaFormat.createAudioFormat(
-                MediaFormat.MIMETYPE_AUDIO_AAC,
-                params.audioSampleRateValue,
-                params.audioChannelCountValue
-            )
-            format.setInteger(MediaFormat.KEY_BIT_RATE, params.audioBitrateValue);
-            audioEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
-            audioEncoder?.configure(format,null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            audioEncoder?.start()
+            audioCapture = AudioCapture()
+            audioCapture?.start(params)
         }
 
-        // 2.视频编码器
-        val videoResolution = params.videoResolutionValue
-        val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC,
-            videoResolution.width, videoResolution.height)
-        // MediaProjection 使用 surface
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-            MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-        // 有自己选择的码率就用, 否则使用视频对应的码率
-        format.setInteger(
-            MediaFormat.KEY_BIT_RATE,
-            if (params.videoBitrate > 0) params.videoBitrateValue else videoResolution.bitrate
-        )
-        // 设置关键帧间隔1s
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
-        // 设置帧率
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, params.videoFpsValue)
-        // 如果是自适应码率, 质量优先
-        // 否则尽量接近设置的值
-        format.setInteger(
-            MediaFormat.KEY_BITRATE_MODE,
-            if (params.videoBitrate == 0) MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ
-            else MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR
-        )
-        // 7.0以上设置KEY_PROFILE 才生效
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            format.setInteger(MediaFormat.KEY_PROFILE,
-                MediaCodecInfo.CodecProfileLevel.AVCProfileMain)
-            format.setInteger(MediaFormat.KEY_LEVEL,
-                MediaCodecInfo.CodecProfileLevel.AVCLevel41)
+        // 视频
+        videoCapture = VideoCapture()
+        videoCapture?.start(params)
+        scope.launch {
+            videoCapture?.initEgl()
         }
-
-        videoEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
-        videoEncoder.setCallback(this)
-        videoEncoder.configure(format,null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        surface = videoEncoder.createInputSurface()
-        videoEncoder.start()
     }
 
+    /**
+     * 停止录制
+     */
     fun stop() {
-        videoEncoder.setCallback(null)
-        videoEncoder.stop()
-        videoEncoder.release()
+        audioCapture?.stop()
+        videoCapture?.stop()
+        scope.launch {
+            videoCapture?.unInitEgl()
+        }
+        try {
+            muxer.stop()
+            muxer.release()
+        } catch (e: Exception) {
+            ILog.e(e)
+            val file = File(path)
+            file.delete()
+            TN.show(R.string.muxer_stop_fail)
+        }
 
-        audioEncoder?.stop()
-        audioEncoder?.release()
-        audioEncoder = null
-
-        muxer.stop()
-        muxer.release()
     }
 
-    override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onOutputBufferAvailable(
-        codec: MediaCodec,
-        index: Int,
-        info: MediaCodec.BufferInfo
-    ) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {
-        TODO("Not yet implemented")
+    fun cancel() {
+        scope.cancel()
     }
 }
