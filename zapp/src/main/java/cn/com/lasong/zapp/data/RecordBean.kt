@@ -9,6 +9,7 @@ import android.os.storage.StorageManager
 import androidx.core.content.getSystemService
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import java.io.File
 import java.util.*
@@ -31,13 +32,26 @@ class RecordBean(var saveDir: String?,
                  var audioSampleRate: Int = 1,// bitrate index
                  var audioBitrate: Int = 1,// channel index 单双声道
                  var audioChannel: Int = 0,// 录制开始倒计时
+                 var fileName: String? = null, //  文件名
                  var delay: Int = 0
 ) : Parcelable {
 
     constructor() : this(null)
 
     @Parcelize
-    data class Video(val index: Int, var width: Int, var height: Int, var bitrate: Int) : Parcelable
+    data class Video(val index: Int, var _width: Int, var _height: Int, var bitrate: Int) : Parcelable {
+        @IgnoredOnParcel
+        val width: Int
+            get(){
+                return _width
+            }
+
+        @IgnoredOnParcel
+        val height: Int
+            get(){
+                return _height
+            }
+    }
 
     companion object {
         // 空间
@@ -52,11 +66,11 @@ class RecordBean(var saveDir: String?,
         const val DIRECTION_LANDSCAPE = 2
 
         // 视频分辨率
-        val VIDEO_MOBILE = Video(0, 0, 0, 0)
-        val VIDEO_1080P = Video(1, 1920, 1080, 4860_000)
-        val VIDEO_720P = Video(2, 1280, 720, 2160_000)
-        val VIDEO_480P = Video(3, 854, 480, 960_000)
-        val VIDEO_360P = Video(4, 640, 360, 600_000)
+        private val VIDEO_MOBILE = Video(0, 0, 0, 0)
+        private val VIDEO_1080P = Video(1, 1920, 1080, 4860_000)
+        private val VIDEO_720P = Video(2, 1280, 720, 2160_000)
+        private val VIDEO_480P = Video(3, 854, 480, 960_000)
+        private val VIDEO_360P = Video(4, 640, 360, 600_000)
         val allResolution = arrayOf(VIDEO_MOBILE, VIDEO_1080P,
             VIDEO_720P, VIDEO_480P, VIDEO_360P)
 
@@ -127,8 +141,8 @@ class RecordBean(var saveDir: String?,
             val resolution = allResolution[videoResolution]
             if (resolution.index == 0 && resolution.width == 0) {
                 val metrics = applicationContext().resources.displayMetrics
-                resolution.width = metrics.widthPixels.coerceAtLeast(metrics.heightPixels)
-                resolution.height = metrics.heightPixels.coerceAtMost(metrics.widthPixels)
+                resolution._width = metrics.widthPixels.coerceAtLeast(metrics.heightPixels)
+                resolution._height = metrics.heightPixels.coerceAtMost(metrics.widthPixels)
                 resolution.bitrate = ((resolution.width * resolution.height * 3.0 / 1000).toInt() * 1000)
             }
             return resolution
@@ -188,6 +202,14 @@ class RecordBean(var saveDir: String?,
             return when(audioChannel) {
                 1 -> AudioFormat.CHANNEL_IN_STEREO
                 else -> AudioFormat.CHANNEL_IN_MONO
+            }
+        }
+
+    val audioChannelCountValue : Int
+        get() {
+            return when(audioChannel) {
+                1 -> 2
+                else -> 1
             }
         }
 

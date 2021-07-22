@@ -11,10 +11,14 @@ import android.os.Bundle
 import android.os.Message
 import android.os.SystemClock
 import androidx.core.app.NotificationCompat
+import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.MainActivity
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.copy
+import cn.com.lasong.zapp.service.muxer.Mpeg4Muxer
+import cn.com.lasong.zapp.service.muxer.VideoCapture
+import kotlinx.coroutines.*
 
 
 /**
@@ -38,6 +42,8 @@ class RecordService : CoreService() {
         const val KEY_RECORD_START_TIME = "record_start_time"
 
         const val CHANNEL_ID = "RECORD_VIDEO_CHANNEL_ID"
+
+        const val TAG = "RecordService"
     }
 
     // 是否正在录制
@@ -50,6 +56,20 @@ class RecordService : CoreService() {
 
     // 录制的启动时间戳
     private var elapsedStartTimeMs: Long = 0
+
+    // 协程域, SupervisorJob 一个子协程出错, 不会影响其他的子协程, Job会传递错误
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // 视频捕获
+    private val capture: VideoCapture = VideoCapture()
+    // MP4合成器
+    private val muxer: Mpeg4Muxer = Mpeg4Muxer()
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ILog.d(TAG,"onDestroy")
+        /*销毁时取消协程域*/
+        scope.cancel()
+    }
 
     override fun handleMessage(msg: Message): Boolean {
         when(msg.what) {
@@ -81,6 +101,7 @@ class RecordService : CoreService() {
             }
             // 3. 停止录制
             MSG_RECORD_STOP -> {
+                stopRecord()
                 isRecording = false
                 elapsedStartTimeMs = 0
                 params = null
@@ -145,7 +166,12 @@ class RecordService : CoreService() {
     /*开始录制*/
     private fun startRecord() {
         elapsedStartTimeMs = SystemClock.elapsedRealtime()
-
+        scope.launch {
+            ILog.d(TAG,"IO Before : I'm working in thread ${Thread.currentThread().name}")
+            capture.start()
+            muxer.start(params!!)
+            ILog.d(TAG, "IO After : I'm working in thread ${Thread.currentThread().name}")
+        }
 
         // 发送成功消息到客户端
         val message = Message.obtain(handler, MSG_RECORD_START)
@@ -156,8 +182,13 @@ class RecordService : CoreService() {
         sendMessage(message)
     }
 
+    /*停止录制*/
     private fun stopRecord() {
-
+        scope.launch {
+            ILog.d(TAG, "IO Before 2 : I'm working in thread ${Thread.currentThread().name}")
+            capture.stop()
+            muxer.stop()
+            ILog.d(TAG, "IO After 2 : I'm working in thread ${Thread.currentThread().name}")
+        }
     }
-
 }
