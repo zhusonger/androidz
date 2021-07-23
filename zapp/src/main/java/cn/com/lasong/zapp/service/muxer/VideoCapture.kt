@@ -1,17 +1,25 @@
 package cn.com.lasong.zapp.service.muxer
 
+import android.annotation.SuppressLint
+import android.graphics.SurfaceTexture
+import android.hardware.display.DisplayManager
+import android.hardware.display.VirtualDisplay
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.media.projection.MediaProjection
+import android.opengl.GLES20
 import android.os.Build
 import android.view.Surface
 import cn.com.lasong.media.gles.MEGLHelper
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.service.RecordService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
+
 
 /**
  * Author: song.zhu
@@ -20,8 +28,11 @@ import java.util.concurrent.Executors
  * Description:
  * 视频捕获
  */
-class VideoCapture {
+class VideoCapture : SurfaceTexture.OnFrameAvailableListener {
 
+    companion object {
+        const val DISPLAY_NAME = "VideoCapture"
+    }
     // 指定线程调度器
     private val videoDispatcher =
         Executors.newSingleThreadExecutor { r -> Thread(r, "VideoDispatcher") }
@@ -33,19 +44,36 @@ class VideoCapture {
     // 视频编码器
     lateinit var videoEncoder: MediaCodec
 
-    lateinit var surface: Surface
+    // 编码器surface
+    lateinit var codecSurface: Surface
+    // 画面纹理
+    lateinit var surfaceTexture: SurfaceTexture
+    // 虚拟屏幕surface
+    lateinit var displaySurface: Surface
 
     // 当前状态
     var state = Mpeg4Muxer.STATE_IDLE
+
+    // 当前编码宽高
+    var width: Int = 0
+    var height: Int = 0
+    var dpi : Int = 1
+
+    // 屏幕数据纹理
+    var screenTexture = 0
+    // 水印纹理
+    var waterTexture = 0
 
     /**
      * 开始在指定线程捕获视频
      */
     fun start(params: RecordBean) {
         val videoResolution = params.videoResolutionValue
+        width = videoResolution.width
+        height = videoResolution.height
+        dpi = videoResolution.dpi
         val format = MediaFormat.createVideoFormat(
-            MediaFormat.MIMETYPE_VIDEO_AVC,
-            videoResolution.width, videoResolution.height)
+            MediaFormat.MIMETYPE_VIDEO_AVC, width, height)
         // MediaProjection 使用 surface
         format.setInteger(
             MediaFormat.KEY_COLOR_FORMAT,
@@ -83,7 +111,7 @@ class VideoCapture {
             isConfig = true
         } catch (e: Exception) {
             format.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
-            ILog.e(e)
+            ILog.d(RecordService.TAG, "Change To BITRATE_MODE_CBR")
         }
 
         if (!isConfig) {
@@ -92,7 +120,7 @@ class VideoCapture {
                 isConfig = true
             } catch (e: Exception) {
                 format.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR)
-                ILog.e(e)
+                ILog.d(RecordService.TAG, "Change To BITRATE_MODE_VBR")
             }
         }
 
@@ -104,7 +132,7 @@ class VideoCapture {
                 return
             }
         }
-        surface = videoEncoder.createInputSurface()
+        codecSurface = videoEncoder.createInputSurface()
         videoEncoder.start()
         state = Mpeg4Muxer.STATE_START
     }
@@ -122,18 +150,57 @@ class VideoCapture {
     /**
      * 创建EGL环境
      */
+    @SuppressLint("Recycle")
     suspend fun initEgl() {
         withContext(videoDispatcher) {
             ILog.d(RecordService.TAG, "VideoDispatcher start : I'm working in thread ${Thread.currentThread().name}")
             eglHelper = MEGLHelper.newInstance()
-            eglHelper.setSurface(surface)
+            // 把编码器的surface作为gles的输入, 更新gles编码器就会有数据
+            eglHelper.setSurface(codecSurface)
+            // 创建屏幕录制镜像 surface
+            screenTexture = MEGLHelper.glGenOesTexture(1)[0]
+            surfaceTexture = SurfaceTexture(screenTexture).also {
+                it.setDefaultBufferSize(width, height)
+                it.setOnFrameAvailableListener(this@VideoCapture)
+            }
+            displaySurface = Surface(surfaceTexture)
+            // 生成水印纹理
+            waterTexture = MEGLHelper.glGen2DTexture(1)[0]
         }
     }
 
+    // 屏幕镜像数据
+    var virtualDisplay: VirtualDisplay? = null
+    /**
+     * 初始化屏幕获取
+     */
+    suspend fun initMediaProjection(projection: MediaProjection) {
+        withContext(Dispatchers.Main) {
+            virtualDisplay = projection.createVirtualDisplay(DISPLAY_NAME, width, height, dpi,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC,
+                displaySurface, null, null)
+        }
+
+    }
+
+    /**
+     * 销毁EGL环境
+     */
     suspend fun unInitEgl() {
         withContext(videoDispatcher) {
             ILog.d(RecordService.TAG, "VideoDispatcher stop : I'm working in thread ${Thread.currentThread().name}")
+            val texture: IntArray = intArrayOf(screenTexture, waterTexture)
+            GLES20.glDeleteTextures(texture.size, texture, 0)
             eglHelper.release()
+            surfaceTexture.release()
+            displaySurface.release()
         }
+        withContext(Dispatchers.Main) {
+            virtualDisplay?.release()
+        }
+    }
+
+    override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
+        ILog.d(RecordService.TAG, "onFrameAvailable : $surfaceTexture")
     }
 }

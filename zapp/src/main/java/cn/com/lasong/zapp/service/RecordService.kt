@@ -3,6 +3,7 @@ package cn.com.lasong.zapp.service
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
@@ -17,7 +18,6 @@ import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.copy
 import cn.com.lasong.zapp.service.muxer.Mpeg4Muxer
-import cn.com.lasong.zapp.service.muxer.VideoCapture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,7 +40,7 @@ class RecordService : CoreService() {
         const val MSG_RECORD_STOP = 3
 
         const val KEY_RECORDING = "recording"
-        const val KEY_MEDIA_PROJECTION_NULL = "mediaProjection_null"
+        const val KEY_MEDIA_DATA_EXIST = "media_data_exist"
         const val KEY_RECORD_PARAMS = "record_params"
         const val KEY_RECORD_START_TIME = "record_start_time"
 
@@ -56,16 +56,22 @@ class RecordService : CoreService() {
 
     // 录制屏幕对象
     private var mediaProjection: MediaProjection? = null
+    private var mediaData: Intent? = null
 
     // 录制的启动时间戳
     private var elapsedStartTimeMs: Long = 0
-    // 视频捕获
-    private val capture: VideoCapture = VideoCapture()
+
     // MP4合成器
     private val muxer: Mpeg4Muxer = Mpeg4Muxer()
-
     // 协程域, SupervisorJob 一个子协程出错, 不会影响其他的子协程, Job会传递错误
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    private val callback : MediaProjection.Callback = object : MediaProjection.Callback() {
+        override fun onStop() {
+            super.onStop()
+            stopRecord()
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -75,13 +81,20 @@ class RecordService : CoreService() {
         scope.cancel()
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        ILog.d("onConfigurationChanged $newConfig")
+        updateOrientation(newConfig)
+        muxer.updateOrientation()
+    }
+
     override fun handleMessage(msg: Message): Boolean {
         when(msg.what) {
             // 1. 返回正在录制的查询结果
             MSG_QUERY_RECORD, MSG_PRE_RECORD -> {
                 val message = Message.obtain(handler, msg.what)
                 message.obj = mapOf(KEY_RECORDING to isRecording,
-                    KEY_MEDIA_PROJECTION_NULL to (mediaProjection == null),
+                    KEY_MEDIA_DATA_EXIST to (mediaData != null),
                     KEY_RECORD_PARAMS to params,
                     KEY_RECORD_START_TIME to elapsedStartTimeMs)
                 sendMessage(message)
@@ -90,18 +103,24 @@ class RecordService : CoreService() {
             MSG_RECORD_START -> {
                 startForeground()
                 isRecording = true
-                val resultData = msg.obj as Intent
-                // 开始录制
-                if (null == mediaProjection) {
-                    val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-                    mediaProjection = manager.getMediaProjection(Activity.RESULT_OK, resultData)
-                }
-
-                if (resultData.hasExtra(KEY_RECORD_PARAMS)) {
-                    val params = resultData.getParcelableExtra(KEY_RECORD_PARAMS) as RecordBean
+                val data = msg.obj as Intent
+                if (data.hasExtra(KEY_RECORD_PARAMS)) {
+                    val params = data.getParcelableExtra(KEY_RECORD_PARAMS) as RecordBean
                     this.params = params.copy()
+                    data.removeExtra(KEY_RECORD_PARAMS)
                 }
-                startRecord()
+                // 开始录制
+                if (null == mediaData) {
+                    mediaData = data
+                }
+                val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                mediaProjection = manager.getMediaProjection(Activity.RESULT_OK, mediaData!!)
+                mediaProjection?.registerCallback(callback, null)
+                if (null != mediaProjection) {
+                    startRecord()
+                } else {
+                    stopRecord()
+                }
             }
             // 3. 停止录制
             MSG_RECORD_STOP -> {
@@ -167,11 +186,26 @@ class RecordService : CoreService() {
         startForeground(hashCode(), notification)
     }
 
+    /*更新屏幕方向*/
+    private fun updateOrientation(configuration: Configuration) {
+        val orientation = configuration.orientation
+        val width = params?.videoResolutionValue?._width!!
+        val height = params?.videoResolutionValue?._height!!
+        if(orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            params?.videoResolutionValue?._width = width.coerceAtLeast(height)
+            params?.videoResolutionValue?._height = height.coerceAtMost(width)
+        } else {
+            params?.videoResolutionValue?._height = width.coerceAtLeast(height)
+            params?.videoResolutionValue?._width = height.coerceAtMost(width)
+        }
+    }
+
     /*开始录制*/
     private fun startRecord() {
         elapsedStartTimeMs = SystemClock.elapsedRealtime()
 
-        muxer.start(params!!)
+        updateOrientation(resources.configuration)
+        muxer.start(params!!, mediaProjection)
 
         // 发送成功消息到客户端
         val message = Message.obtain(handler, MSG_RECORD_START)
@@ -185,5 +219,7 @@ class RecordService : CoreService() {
     /*停止录制*/
     private fun stopRecord() {
         muxer.stop()
+        mediaProjection?.unregisterCallback(callback)
+        mediaProjection = null
     }
 }

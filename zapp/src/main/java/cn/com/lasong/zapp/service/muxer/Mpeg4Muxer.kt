@@ -1,6 +1,7 @@
 package cn.com.lasong.zapp.service.muxer
 
 import android.media.MediaMuxer
+import android.media.projection.MediaProjection
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.utils.TN
 import cn.com.lasong.zapp.R
@@ -15,6 +16,7 @@ import java.util.*
  * Email: song.zhu@lasong.com.cn
  * Date: 2021/7/22
  * Description:
+ * MP4合成
  */
 class Mpeg4Muxer {
 
@@ -54,7 +56,7 @@ class Mpeg4Muxer {
     /**
      * 开始录制并合成MP4文件
      */
-    fun start(params: RecordBean) {
+    fun start(params: RecordBean, projection: MediaProjection?) {
         this.params = params
         val simpleDateFormat = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
         val fileName = simpleDateFormat.format(Calendar.getInstance().time)
@@ -75,6 +77,8 @@ class Mpeg4Muxer {
             videoCapture?.start(params)
             scope.launch {
                 videoCapture?.initEgl()
+                // 放在有looper的线程中调用, 否则handler传null会报错
+                videoCapture?.initMediaProjection(projection!!)
             }
         }
     }
@@ -83,25 +87,31 @@ class Mpeg4Muxer {
      * 停止录制
      */
     fun stop() {
-        audioCapture?.stop()
-        videoCapture?.stop()
         scope.launch {
             videoCapture?.unInitEgl()
+            audioCapture?.stop()
+            videoCapture?.stop()
+            try {
+                muxer.stop()
+                muxer.release()
+            } catch (e: Exception) {
+                ILog.e(e)
+                val file = File(path)
+                file.delete()
+                TN.show(R.string.muxer_stop_fail)
+            }
+            audioCapture?.state = STATE_IDLE
+            videoCapture?.state = STATE_IDLE
         }
-        try {
-            muxer.stop()
-            muxer.release()
-        } catch (e: Exception) {
-            ILog.e(e)
-            val file = File(path)
-            file.delete()
-            TN.show(R.string.muxer_stop_fail)
-        }
-        audioCapture?.state = STATE_IDLE
-        videoCapture?.state = STATE_IDLE
     }
 
+    /*取消协程域*/
     fun cancel() {
         scope.cancel()
+    }
+
+    /*屏幕方向更改*/
+    fun updateOrientation() {
+        // TODO: 2021/7/23 更改屏幕方向修改GLES
     }
 }

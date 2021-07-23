@@ -151,14 +151,14 @@ class MainActivity : CoreActivity() {
             RecordService.MSG_QUERY_RECORD -> {
                 val map = msg.obj as Map<*, *>
                 val recording  = map[RecordService.KEY_RECORDING] as Boolean
-                val mediaProjectionNull = map[RecordService.KEY_MEDIA_PROJECTION_NULL] as Boolean
+                val mediaDataExist = map[RecordService.KEY_MEDIA_DATA_EXIST] as Boolean
                 val startTime = map[RecordService.KEY_RECORD_START_TIME] as Long
                 // 1.2.1 如果不在录制且没有录制对象, 请求录制权限
-                if (!recording && mediaProjectionNull) {
+                if (!recording && !mediaDataExist) {
                     mCaptureLauncher.launch(null)
                 }
                 // 1.2.2 如果不在录制且有录制对象, 直接开始录制
-                else if (!recording && !mediaProjectionNull) {
+                else if (!recording && mediaDataExist) {
                     viewModel.targetState.value = RecordState.START
                 }
                 // 1.2.3 正在录制, 同步下状态即可

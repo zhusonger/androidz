@@ -1,11 +1,14 @@
 package cn.com.lasong.zapp.data
 
+import android.content.Context
 import android.media.AudioFormat
 import android.os.Build
 import android.os.Environment
 import android.os.Parcelable
 import android.os.StatFs
 import android.os.storage.StorageManager
+import android.util.DisplayMetrics
+import android.view.WindowManager
 import androidx.core.content.getSystemService
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
@@ -40,7 +43,7 @@ class RecordBean(var saveDir: String?,
     constructor() : this(null)
 
     @Parcelize
-    data class Video(val index: Int, var _width: Int, var _height: Int, var bitrate: Int) : Parcelable {
+    data class Video(val index: Int, var _width: Int, var _height: Int, var bitrate: Int, var dpi: Int = 1) : Parcelable {
         // 做16位对齐
         @IgnoredOnParcel
         val width: Int
@@ -150,10 +153,13 @@ class RecordBean(var saveDir: String?,
         get() {
             val resolution = allResolution[videoResolution]
             if (resolution.index == 0 && resolution.width == 0) {
-                val metrics = applicationContext().resources.displayMetrics
+                val manager = applicationContext().getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val metrics = DisplayMetrics()
+                manager.defaultDisplay.getRealMetrics(metrics)
                 resolution._width = metrics.widthPixels.coerceAtLeast(metrics.heightPixels)
                 resolution._height = metrics.heightPixels.coerceAtMost(metrics.widthPixels)
                 resolution.bitrate = ((resolution.width * resolution.height * 3.0 / 1000).toInt() * 1000)
+                resolution.dpi = metrics.density.toInt()
             }
             return resolution
         }
