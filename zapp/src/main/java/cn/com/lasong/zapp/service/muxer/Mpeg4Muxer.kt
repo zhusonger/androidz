@@ -2,7 +2,6 @@ package cn.com.lasong.zapp.service.muxer
 
 import android.media.MediaMuxer
 import android.media.projection.MediaProjection
-import cn.com.lasong.utils.ILog
 import cn.com.lasong.utils.TN
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.data.RecordBean
@@ -67,19 +66,14 @@ class Mpeg4Muxer {
 
         // 音频
         if (params.audioEnable) {
-            audioCapture = AudioCapture()
+            audioCapture = AudioCapture(scope)
             audioCapture?.start(params)
         }
 
         // 视频
         if (params.videoEnable) {
-            videoCapture = VideoCapture()
-            videoCapture?.start(params)
-            scope.launch {
-                videoCapture?.initEgl()
-                // 放在有looper的线程中调用, 否则handler传null会报错
-                videoCapture?.initMediaProjection(projection!!)
-            }
+            videoCapture = VideoCapture(scope)
+            videoCapture?.start(params, projection!!)
         }
     }
 
@@ -88,17 +82,19 @@ class Mpeg4Muxer {
      */
     fun stop() {
         scope.launch {
-            videoCapture?.unInitEgl()
             audioCapture?.stop()
+            videoCapture?.unInitEgl()
             videoCapture?.stop()
+            // 等待音视频结束再停止合成
             try {
                 muxer.stop()
                 muxer.release()
             } catch (e: Exception) {
-                ILog.e(e)
                 val file = File(path)
                 file.delete()
-                TN.show(R.string.muxer_stop_fail)
+                withContext(Dispatchers.Main) {
+                    TN.show(R.string.muxer_stop_fail)
+                }
             }
             audioCapture?.state = STATE_IDLE
             videoCapture?.state = STATE_IDLE

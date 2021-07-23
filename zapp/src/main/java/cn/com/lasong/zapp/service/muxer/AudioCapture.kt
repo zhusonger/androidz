@@ -3,6 +3,7 @@ package cn.com.lasong.zapp.service.muxer
 import android.media.MediaCodec
 import android.media.MediaFormat
 import cn.com.lasong.zapp.data.RecordBean
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Author: zhusong
@@ -11,7 +12,7 @@ import cn.com.lasong.zapp.data.RecordBean
  * Description:
  * 音频捕获类
  */
-class AudioCapture {
+class AudioCapture(scope: CoroutineScope) {
     // 音频编码器
     private lateinit var audioEncoder: MediaCodec
 
@@ -32,6 +33,7 @@ class AudioCapture {
     }
 
     fun stop() {
+        // TODO: 2021/7/23 添加最后一帧数据 
         audioEncoder.stop()
         audioEncoder.release()
         state = Mpeg4Muxer.STATE_STOP

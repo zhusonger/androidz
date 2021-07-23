@@ -15,9 +15,7 @@ import cn.com.lasong.media.gles.MEGLHelper
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.service.RecordService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.util.concurrent.Executors
 
 
@@ -28,11 +26,12 @@ import java.util.concurrent.Executors
  * Description:
  * 视频捕获
  */
-class VideoCapture : SurfaceTexture.OnFrameAvailableListener {
+class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableListener {
 
     companion object {
         const val DISPLAY_NAME = "VideoCapture"
     }
+
     // 指定线程调度器
     private val videoDispatcher =
         Executors.newSingleThreadExecutor { r -> Thread(r, "VideoDispatcher") }
@@ -64,10 +63,13 @@ class VideoCapture : SurfaceTexture.OnFrameAvailableListener {
     // 水印纹理
     var waterTexture = 0
 
+    // 屏幕镜像数据
+    var virtualDisplay: VirtualDisplay? = null
+
     /**
      * 开始在指定线程捕获视频
      */
-    fun start(params: RecordBean) {
+    fun start(params: RecordBean, projection: MediaProjection? = null) {
         val videoResolution = params.videoResolutionValue
         width = videoResolution.width
         height = videoResolution.height
@@ -134,7 +136,14 @@ class VideoCapture : SurfaceTexture.OnFrameAvailableListener {
         }
         codecSurface = videoEncoder.createInputSurface()
         videoEncoder.start()
-        state = Mpeg4Muxer.STATE_START
+
+        scope.launch {
+            initEgl()
+            if (null != projection) {
+                initMediaProjection(projection)
+            }
+            state = Mpeg4Muxer.STATE_START
+        }
     }
 
     /**
@@ -159,48 +168,55 @@ class VideoCapture : SurfaceTexture.OnFrameAvailableListener {
             eglHelper.setSurface(codecSurface)
             // 创建屏幕录制镜像 surface
             screenTexture = MEGLHelper.glGenOesTexture(1)[0]
-            surfaceTexture = SurfaceTexture(screenTexture).also {
-                it.setDefaultBufferSize(width, height)
-                it.setOnFrameAvailableListener(this@VideoCapture)
-            }
+            surfaceTexture = SurfaceTexture(screenTexture)
+            surfaceTexture.setDefaultBufferSize(width, height)
+            surfaceTexture.setOnFrameAvailableListener(this@VideoCapture)
             displaySurface = Surface(surfaceTexture)
             // 生成水印纹理
             waterTexture = MEGLHelper.glGen2DTexture(1)[0]
         }
     }
 
-    // 屏幕镜像数据
-    var virtualDisplay: VirtualDisplay? = null
     /**
      * 初始化屏幕获取
      */
-    suspend fun initMediaProjection(projection: MediaProjection) {
+    private suspend fun initMediaProjection(projection: MediaProjection) {
+        // 放在有looper的线程中调用, 否则handler传null会空指针
         withContext(Dispatchers.Main) {
             virtualDisplay = projection.createVirtualDisplay(DISPLAY_NAME, width, height, dpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC,
                 displaySurface, null, null)
         }
-
     }
 
     /**
      * 销毁EGL环境
      */
     suspend fun unInitEgl() {
+        withContext(Dispatchers.Main) {
+            virtualDisplay?.surface = null
+            virtualDisplay?.release()
+        }
         withContext(videoDispatcher) {
-            ILog.d(RecordService.TAG, "VideoDispatcher stop : I'm working in thread ${Thread.currentThread().name}")
             val texture: IntArray = intArrayOf(screenTexture, waterTexture)
             GLES20.glDeleteTextures(texture.size, texture, 0)
-            eglHelper.release()
             surfaceTexture.release()
             displaySurface.release()
-        }
-        withContext(Dispatchers.Main) {
-            virtualDisplay?.release()
+            eglHelper.release()
         }
     }
 
+    // for MODE_GL_OES, frame comes one by one, means the callback will not be invoked
+    // until SurfaceTexture.updateTexImage() done
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
-        ILog.d(RecordService.TAG, "onFrameAvailable : $surfaceTexture")
+        scope.launch (videoDispatcher) {
+            // 1. 获取屏幕数据
+            surfaceTexture?.updateTexImage()
+            // 2. gles绘制到编码器surface
+            // todo
+            // 3. 编码器获取数据
+            withContext(Dispatchers.IO) {
+            }
+        }
     }
 }
