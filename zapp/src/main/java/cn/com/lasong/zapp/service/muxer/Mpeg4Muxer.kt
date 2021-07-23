@@ -22,6 +22,11 @@ class Mpeg4Muxer {
         const val FLAG_IDLE = 0
         const val FLAG_AUDIO = 1
         const val FLAG_VIDEO = 2
+
+        const val STATE_IDLE = 0
+        const val STATE_START = 1
+        const val STATE_RUNNING = 2
+        const val STATE_STOP = 3
     }
     // 协程域, SupervisorJob 一个子协程出错, 不会影响其他的子协程, Job会传递错误
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -65,10 +70,12 @@ class Mpeg4Muxer {
         }
 
         // 视频
-        videoCapture = VideoCapture()
-        videoCapture?.start(params)
-        scope.launch {
-            videoCapture?.initEgl()
+        if (params.videoEnable) {
+            videoCapture = VideoCapture()
+            videoCapture?.start(params)
+            scope.launch {
+                videoCapture?.initEgl()
+            }
         }
     }
 
@@ -90,7 +97,8 @@ class Mpeg4Muxer {
             file.delete()
             TN.show(R.string.muxer_stop_fail)
         }
-
+        audioCapture?.state = STATE_IDLE
+        videoCapture?.state = STATE_IDLE
     }
 
     fun cancel() {

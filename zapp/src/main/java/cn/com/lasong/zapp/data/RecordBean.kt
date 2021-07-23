@@ -23,6 +23,7 @@ import java.util.*
  */
 @Parcelize
 class RecordBean(var saveDir: String?,
+                 var videoEnable: Boolean = true, // 视频是否可用
                  private var _appFreeSize: Long = 0,// video direction
                  var videoDirection: Int = 0,// resolution index
                  var videoResolution: Int = 0,// bitrate index

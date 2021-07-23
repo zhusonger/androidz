@@ -18,6 +18,10 @@ import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.copy
 import cn.com.lasong.zapp.service.muxer.Mpeg4Muxer
 import cn.com.lasong.zapp.service.muxer.VideoCapture
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 
 /**
@@ -60,12 +64,15 @@ class RecordService : CoreService() {
     // MP4合成器
     private val muxer: Mpeg4Muxer = Mpeg4Muxer()
 
+    // 协程域, SupervisorJob 一个子协程出错, 不会影响其他的子协程, Job会传递错误
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     override fun onDestroy() {
         super.onDestroy()
         ILog.d(TAG,"onDestroy")
         /*销毁时取消协程域*/
         muxer.cancel()
-//        scope.cancel()
+        scope.cancel()
     }
 
     override fun handleMessage(msg: Message): Boolean {

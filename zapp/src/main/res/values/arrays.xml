@@ -76,12 +76,12 @@
         <item>32kbps</item>
         <item>16kbps</item>
     </string-array>
-    <string-array name="array_audio_bitrate_value">
+    <integer-array name="array_audio_bitrate_value">
         <item>96000</item>
         <item>64000</item>
         <item>32000</item>
         <item>16000</item>
-    </string-array>
+    </integer-array>
 
     <string-array name="array_channels">
         <item>单声道(Mono)</item>
@@ -93,10 +93,10 @@
         <item>5s</item>
         <item>10s</item>
     </string-array>
-    <string-array name="array_delay_value">
+    <integer-array name="array_delay_value">
         <item>0</item>
         <item>3</item>
         <item>5</item>
         <item>10</item>
-    </string-array>
+    </integer-array>
 </resources>

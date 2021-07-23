@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 
 /**
- * Author: zhusong
+ * Author: song.zhu
  * Email: song.zhu@lasong.com.cn
  * Date: 2021/7/22
  * Description:
@@ -28,13 +28,15 @@ class VideoCapture {
             .asCoroutineDispatcher()
 
     // EGL环境帮助类
-    var eglHelper: MEGLHelper? = null
+    lateinit var eglHelper: MEGLHelper
 
     // 视频编码器
     lateinit var videoEncoder: MediaCodec
 
-    // 编码器输入surface
-    private lateinit var surface: Surface
+    lateinit var surface: Surface
+
+    // 当前状态
+    var state = Mpeg4Muxer.STATE_IDLE
 
     /**
      * 开始在指定线程捕获视频
@@ -97,14 +99,14 @@ class VideoCapture {
         if (!isConfig) {
             try {
                 videoEncoder.configure(format,null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-                isConfig = true
             } catch (e: Exception) {
-                format.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR)
                 ILog.e(e)
+                return
             }
         }
         surface = videoEncoder.createInputSurface()
         videoEncoder.start()
+        state = Mpeg4Muxer.STATE_START
     }
 
     /**
@@ -114,6 +116,7 @@ class VideoCapture {
     fun stop() {
         videoEncoder.stop()
         videoEncoder.release()
+        state = Mpeg4Muxer.STATE_STOP
     }
 
     /**
@@ -121,18 +124,16 @@ class VideoCapture {
      */
     suspend fun initEgl() {
         withContext(videoDispatcher) {
-            ILog.d(RecordService.TAG, "VideoDispatcher stop : I'm working in thread ${Thread.currentThread().name}")
-            eglHelper?.release()
+            ILog.d(RecordService.TAG, "VideoDispatcher start : I'm working in thread ${Thread.currentThread().name}")
+            eglHelper = MEGLHelper.newInstance()
+            eglHelper.setSurface(surface)
         }
     }
 
     suspend fun unInitEgl() {
         withContext(videoDispatcher) {
-            ILog.d(RecordService.TAG, "VideoDispatcher start : I'm working in thread ${Thread.currentThread().name}")
-            if (eglHelper != null) {
-                return@withContext
-            }
-            eglHelper = MEGLHelper.newInstance()
+            ILog.d(RecordService.TAG, "VideoDispatcher stop : I'm working in thread ${Thread.currentThread().name}")
+            eglHelper.release()
         }
     }
 }

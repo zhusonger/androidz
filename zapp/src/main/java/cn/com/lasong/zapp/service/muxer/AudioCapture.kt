@@ -15,6 +15,9 @@ class AudioCapture {
     // 音频编码器
     private lateinit var audioEncoder: MediaCodec
 
+    // 当前状态
+    var state = Mpeg4Muxer.STATE_IDLE
+
     fun start(params: RecordBean) {
         val format = MediaFormat.createAudioFormat(
             MediaFormat.MIMETYPE_AUDIO_AAC,
@@ -25,10 +28,12 @@ class AudioCapture {
         audioEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
         audioEncoder.configure(format,null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
         audioEncoder.start()
+        state = Mpeg4Muxer.STATE_START
     }
 
     fun stop() {
         audioEncoder.stop()
         audioEncoder.release()
+        state = Mpeg4Muxer.STATE_STOP
     }
 }

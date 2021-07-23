@@ -1,10 +1,14 @@
 package cn.com.lasong.zapp
 
 import android.content.Intent
+import android.graphics.PixelFormat
 import android.os.Bundle
 import android.os.Message
+import android.view.WindowManager
+import android.view.animation.AnimationUtils
 import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -15,8 +19,12 @@ import cn.com.lasong.zapp.base.CoreActivity
 import cn.com.lasong.zapp.base.contract.MediaProjectRequest
 import cn.com.lasong.zapp.data.RecordState
 import cn.com.lasong.zapp.databinding.ActivityMainBinding
+import cn.com.lasong.zapp.databinding.ViewDelayBinding
 import cn.com.lasong.zapp.service.CoreService
 import cn.com.lasong.zapp.service.RecordService
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 class MainActivity : CoreActivity() {
@@ -26,6 +34,8 @@ class MainActivity : CoreActivity() {
 
     lateinit var mCaptureLauncher: ActivityResultLauncher<Void>
     private lateinit var viewModel: MainViewModel
+
+    private var delayJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,12 +63,29 @@ class MainActivity : CoreActivity() {
                 }
                 // 1.3! 开始录制
                 RecordState.START -> {
-                    viewModel.currentState.value = RecordState.START
-                    val message = Message.obtain(handler, RecordService.MSG_RECORD_START)
-                    val data = viewModel.captureResult.value ?: Intent()
-                    data.putExtra(RecordService.KEY_RECORD_PARAMS, viewModel.params.value)
-                    message.obj = data
-                    sendMessage(message)
+                    delayJob = lifecycleScope.launch {
+                        val params = viewModel.params.value
+                        val delay = params?.delayValue!!
+                        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+                        val binding = ViewDelayBinding.inflate(layoutInflater)
+                        windowManager.addView(binding.root, WindowManager.LayoutParams().also { lp->
+                            lp.format = PixelFormat.RGBA_8888
+                        })
+
+                        val anim = AnimationUtils.loadAnimation(this@MainActivity, R.anim.record_delay_anim)
+                        for (sec in delay downTo 1) {
+                            binding.tvDelay.text = sec.toString()
+                            binding.tvDelay.startAnimation(anim)
+                            delay(1000)
+                        }
+                        windowManager.removeView(binding.root)
+                        viewModel.currentState.value = RecordState.START
+                        val message = Message.obtain(handler, RecordService.MSG_RECORD_START)
+                        val data = viewModel.captureResult.value ?: Intent()
+                        data.putExtra(RecordService.KEY_RECORD_PARAMS, viewModel.params.value)
+                        message.obj = data
+                        sendMessage(message)
+                    }
                 }
                 // 1.4! 启动完成, 更新UI为运行中
                 RecordState.RUNNING -> {
@@ -68,9 +95,11 @@ class MainActivity : CoreActivity() {
                 }
                 // 1.5! 停止录制
                 RecordState.STOP -> {
+                    delayJob?.cancel()
                     viewModel.currentState.value = RecordState.STOP
                     val message = Message.obtain(handler, RecordService.MSG_RECORD_STOP)
                     sendMessage(message)
+
                 }
                 // 1.6! 默认状态
                 RecordState.IDLE -> {
@@ -146,6 +175,7 @@ class MainActivity : CoreActivity() {
                     val startTime = data.getLong(RecordService.KEY_RECORD_START_TIME)
                     viewModel.targetState.value = RecordState.RUNNING
                     viewModel.startTimer(startTime)
+                    moveTaskToBack(true)
                 }
             }
             // 1.5! 已经停止完成, 设置为闲置状态
