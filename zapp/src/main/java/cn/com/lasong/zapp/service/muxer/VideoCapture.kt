@@ -1,6 +1,8 @@
 package cn.com.lasong.zapp.service.muxer
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.SurfaceTexture
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
@@ -13,9 +15,16 @@ import android.os.Build
 import android.view.Surface
 import cn.com.lasong.media.gles.MEGLHelper
 import cn.com.lasong.utils.ILog
+import cn.com.lasong.zapp.R
+import cn.com.lasong.zapp.ZApp
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.service.RecordService
+import cn.com.lasong.zapp.service.muxer.render.VideoRender
 import kotlinx.coroutines.*
+import java.io.File
+import java.io.FileOutputStream
+import java.nio.IntBuffer
+import java.util.*
 import java.util.concurrent.Executors
 
 
@@ -38,17 +47,17 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
             .asCoroutineDispatcher()
 
     // EGL环境帮助类
-    lateinit var eglHelper: MEGLHelper
+    private lateinit var eglHelper: MEGLHelper
 
     // 视频编码器
-    lateinit var videoEncoder: MediaCodec
+    private lateinit var videoEncoder: MediaCodec
 
     // 编码器surface
-    lateinit var codecSurface: Surface
+    private lateinit var codecSurface: Surface
     // 画面纹理
-    lateinit var surfaceTexture: SurfaceTexture
+    private lateinit var surfaceTexture: SurfaceTexture
     // 虚拟屏幕surface
-    lateinit var displaySurface: Surface
+    private lateinit var displaySurface: Surface
 
     // 当前状态
     var state = Mpeg4Muxer.STATE_IDLE
@@ -59,18 +68,26 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
     var dpi : Int = 1
 
     // 屏幕数据纹理
-    var screenTexture = 0
+    private var screenTexture = 0
     // 水印纹理
-    var waterTexture = 0
+    private var waterTexture = 0
 
     // 屏幕镜像数据
-    var virtualDisplay: VirtualDisplay? = null
+    private var virtualDisplay: VirtualDisplay? = null
 
+    // 视频渲染工具
+    private lateinit var render: VideoRender
+
+    // 屏幕纹理的矩阵
+    private val oesMatrix: FloatArray = FloatArray(16)
+
+    lateinit var path: String
     /**
      * 开始在指定线程捕获视频
      */
     fun start(params: RecordBean, projection: MediaProjection? = null) {
         val videoResolution = params.videoResolutionValue
+        path = params.saveDir!!
         width = videoResolution.width
         height = videoResolution.height
         dpi = videoResolution.dpi
@@ -161,6 +178,14 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
      */
     @SuppressLint("Recycle")
     suspend fun initEgl() {
+        var watermark: Bitmap? = null
+        withContext(Dispatchers.IO) {
+            try {
+                watermark = BitmapFactory.decodeResource(ZApp.applicationContext().resources, R.drawable.ic_notification_small)
+            } catch (t: Throwable) {
+                ILog.e(RecordService.TAG, "decodeResource watermark fail", t)
+            }
+        }
         withContext(videoDispatcher) {
             ILog.d(RecordService.TAG, "VideoDispatcher start : I'm working in thread ${Thread.currentThread().name}")
             eglHelper = MEGLHelper.newInstance()
@@ -174,6 +199,13 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
             displaySurface = Surface(surfaceTexture)
             // 生成水印纹理
             waterTexture = MEGLHelper.glGen2DTexture(1)[0]
+            // 初始化视频渲染器
+            render = VideoRender(eglHelper.glVersion)
+            render.init(width, height)
+            // 绑定水印纹理
+            if (null != watermark) {
+                render.updateWaterMark(waterTexture, watermark!!)
+            }
         }
     }
 
@@ -185,7 +217,22 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
         withContext(Dispatchers.Main) {
             virtualDisplay = projection.createVirtualDisplay(DISPLAY_NAME, width, height, dpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC,
-                displaySurface, null, null)
+                displaySurface, object : VirtualDisplay.Callback() {
+                    override fun onPaused() {
+                        super.onPaused()
+                        ILog.d(RecordService.TAG, "VirtualDisplay onPaused")
+                    }
+
+                    override fun onResumed() {
+                        super.onResumed()
+                        ILog.d(RecordService.TAG, "VirtualDisplay onResumed")
+                    }
+
+                    override fun onStopped() {
+                        super.onStopped()
+                        ILog.d(RecordService.TAG, "VirtualDisplay onStopped")
+                    }
+                }, null)
         }
     }
 
@@ -194,28 +241,126 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
      */
     suspend fun unInitEgl() {
         withContext(Dispatchers.Main) {
+            ILog.d(RecordService.TAG, "release virtualDisplay")
             virtualDisplay?.surface = null
             virtualDisplay?.release()
         }
         withContext(videoDispatcher) {
-            val texture: IntArray = intArrayOf(screenTexture, waterTexture)
-            GLES20.glDeleteTextures(texture.size, texture, 0)
+            ILog.d(RecordService.TAG, "release texture")
+            val textures: IntArray = intArrayOf(screenTexture, waterTexture)
+            MEGLHelper.glDeleteTextures(textures)
+            render.release()
             surfaceTexture.release()
             displaySurface.release()
             eglHelper.release()
+            ILog.d(RecordService.TAG, "release texture done")
         }
     }
 
-    // for MODE_GL_OES, frame comes one by one, means the callback will not be invoked
+    // frame comes one by one, means the callback will not be invoked
     // until SurfaceTexture.updateTexImage() done
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
+        ILog.d(RecordService.TAG, "onFrameAvailable")
         scope.launch (videoDispatcher) {
-            // 1. 获取屏幕数据
+            // 1. 获取屏幕数据到oes纹理
             surfaceTexture?.updateTexImage()
+            surfaceTexture?.getTransformMatrix(oesMatrix) // 纹理矩阵, 一般是校正坐标系统导致的旋转矩阵
             // 2. gles绘制到编码器surface
-            // todo
+            render.doFrame(screenTexture, oesMatrix)
+            capture()
+            val ptsNs = Mpeg4Muxer.elapsedPtsNs
+            ILog.d(RecordService.TAG, "elapsedPtsNs : $ptsNs")
+            eglHelper.swapBuffer(ptsNs)
             // 3. 编码器获取数据
             withContext(Dispatchers.IO) {
+
+            }
+        }
+    }
+
+    /**
+     * 处理旋转矩阵来保证屏幕转向时, 渲染时把画面转回到原来的位置
+     * @param target 目标屏幕的方向
+     * @param current 当前屏幕的方向
+     */
+    fun rotate(target: Int, current: Int) {
+        // 暂停屏幕数据输出
+        virtualDisplay?.surface = null
+        // 横竖屏切换重新设置宽高
+        when(current) {
+            // 竖屏
+            Surface.ROTATION_0, Surface.ROTATION_180 -> {
+                val newWidth = width.coerceAtMost(height)
+                val newHeight = width.coerceAtLeast(height)
+                virtualDisplay?.resize(newWidth, newHeight, dpi)
+                surfaceTexture.setDefaultBufferSize(newWidth, newHeight)
+            }
+            // 横屏
+            else -> {
+                val newWidth = width.coerceAtLeast(height)
+                val newHeight = width.coerceAtMost(height)
+                virtualDisplay?.resize(newWidth, newHeight, dpi)
+                surfaceTexture.setDefaultBufferSize(newWidth, newHeight)
+            }
+        }
+        // 更新旋转矩阵, 把新的屏幕方向转回到开始录制时的方向
+        render.rotate(target, current)
+        capture = true
+        // 恢复屏幕数据输出
+        virtualDisplay?.surface = displaySurface
+    }
+
+    var capture = true
+    var count = 0
+    private suspend fun capture() {
+        if (capture) {
+            capture = false
+            val capacity: Int = width * height
+            val buffer: IntBuffer = IntBuffer.allocate(capacity)
+            // from left bottom, 0, 0
+            // from left bottom, 0, 0
+            GLES20.glReadPixels(
+                0, 0, width, height,
+                GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buffer
+            )
+
+            val pixels = IntArray(capacity)
+            val fixPixels: IntArray = pixels.copyOf(capacity)
+            buffer.get(pixels)
+            withContext(Dispatchers.Default) {
+                // glReadPixels output data is reverse
+                // simple : RBGA -> ABGR pix[0,0] -> pix[0, h]
+                // glReadPixels output data is reverse
+                // simple : RBGA -> ABGR pix[0,0] -> pix[0, h]
+                val width: Int = width
+                val height: Int = height
+                for (i in 0 until capacity) {
+                    val pixel = pixels[i] // pixel dot
+                    // data is ABGR, we need ARGB
+                    val pA_G_ = pixel and -0xff0100
+                    val p___B = pixel shr 16 and 0xFF
+                    val p_R__ = pixel and 0xFF shl 16
+                    val fixPixel = pA_G_ or p_R__ or p___B
+                    val row = i / width
+                    val col = i % width
+                    val fixIndex = (height - row - 1) * width + col
+                    fixPixels[fixIndex] = fixPixel
+                }
+            }
+            withContext(Dispatchers.IO) {
+                try {
+                    val bmp = Bitmap.createBitmap(
+                        fixPixels,
+                        width,
+                        height,
+                        Bitmap.Config.ARGB_8888
+                    )
+                    val fos = FileOutputStream(File(path, "capture_$count.png"))
+                    bmp?.compress(Bitmap.CompressFormat.PNG, 100, fos)
+                    fos.close()
+                } catch (e: Exception) {
+                    ILog.e(RecordService.TAG, "screenCapture createBitmap", e)
+                }
             }
         }
     }

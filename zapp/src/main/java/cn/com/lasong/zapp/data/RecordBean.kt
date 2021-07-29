@@ -8,6 +8,7 @@ import android.os.Parcelable
 import android.os.StatFs
 import android.os.storage.StorageManager
 import android.util.DisplayMetrics
+import android.view.Surface
 import android.view.WindowManager
 import androidx.core.content.getSystemService
 import cn.com.lasong.zapp.R
@@ -37,7 +38,8 @@ class RecordBean(var saveDir: String?,
                  var audioBitrate: Int = 1,// channel index 单双声道
                  var audioChannel: Int = 0,// 录制开始倒计时
                  var fileName: String? = null, //  文件名
-                 var delay: Int = 0
+                 var delay: Int = 0, // 延时开始录制时间, 单位s
+                 var rotation: Int = Surface.ROTATION_0 // 视频旋转角度, 默认未旋转, 只有在videoDirection为DIRECTION_AUTO时生效
 ) : Parcelable {
 
     constructor() : this(null)

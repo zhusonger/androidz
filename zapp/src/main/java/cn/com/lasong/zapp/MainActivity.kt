@@ -134,11 +134,11 @@ class MainActivity : CoreActivity() {
         when(msg.what) {
             // 进入时查询当前状态
             CoreService.MSG_REGISTER_CLIENT -> {
-                val message = Message.obtain(handler, RecordService.MSG_PRE_RECORD)
+                val message = Message.obtain(handler, RecordService.MSG_QUERY_LAST_RECORD)
                 sendMessage(message)
             }
             // 返回当前状态, 如果正在录制, 就同步下状态
-            RecordService.MSG_PRE_RECORD -> {
+            RecordService.MSG_QUERY_LAST_RECORD -> {
                 val map = msg.obj as Map<*, *>
                 val recording  = map[RecordService.KEY_RECORDING] as Boolean
                 val startTime = map[RecordService.KEY_RECORD_START_TIME] as Long

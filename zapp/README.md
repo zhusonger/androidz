@@ -56,3 +56,37 @@ sweep-flag从起点到终点是顺时针还是逆时针画圆弧。
 * ![video](video.jpeg)
 
 * ![audio](audio.png)
+
+# 变换矩阵
+
+* 平移矩阵：
+
+![](https://upload-images.jianshu.io/upload_images/5297002-3f9bafdd3d5c1557.png)
+    
+* 缩放矩阵：
+
+![](https://upload-images.jianshu.io/upload_images/5297002-e55d299f5e371806.png)
+
+* 旋转矩阵
+
+    * 沿 X 轴旋转矩阵：
+    
+    ![](https://upload-images.jianshu.io/upload_images/5297002-2ccda925a87c9003.png)
+
+    * 沿 Y 轴旋转矩阵：
+    
+    ![](https://upload-images.jianshu.io/upload_images/5297002-c84e20d1b478349e.png)
+ 
+    * 沿 Z 轴旋转矩阵
+       
+    ![](https://upload-images.jianshu.io/upload_images/5297002-499d0a40900fee07.png)
+
+# OpenGL ES坐标系与转换
+
+<https://www.icode9.com/content-4-104277.html>
+   
+<https://www.jianshu.com/p/871c3303c8b6> 
+
+# OpenGL ES Demo
+
+<https://github.com/kenneycode/OpenGLESPro>

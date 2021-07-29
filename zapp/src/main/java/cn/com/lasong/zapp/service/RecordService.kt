@@ -11,6 +11,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Message
 import android.os.SystemClock
+import android.view.Surface
+import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.MainActivity
@@ -36,7 +38,7 @@ class RecordService : CoreService() {
     companion object {
         const val MSG_QUERY_RECORD = 0
         const val MSG_RECORD_START = 1
-        const val MSG_PRE_RECORD = 2
+        const val MSG_QUERY_LAST_RECORD = 2
         const val MSG_RECORD_STOP = 3
 
         const val KEY_RECORDING = "recording"
@@ -51,7 +53,7 @@ class RecordService : CoreService() {
 
     // 是否正在录制
     private var isRecording = false
-
+    // 录制参数
     private var params: RecordBean? = null
 
     // 录制屏幕对象
@@ -84,14 +86,14 @@ class RecordService : CoreService() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         ILog.d("onConfigurationChanged $newConfig")
-        updateOrientation(newConfig)
-        muxer.updateOrientation()
+        val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+        muxer.updateOrientation(rotation)
     }
 
     override fun handleMessage(msg: Message): Boolean {
         when(msg.what) {
             // 1. 返回正在录制的查询结果
-            MSG_QUERY_RECORD, MSG_PRE_RECORD -> {
+            MSG_QUERY_RECORD, MSG_QUERY_LAST_RECORD -> {
                 val message = Message.obtain(handler, msg.what)
                 message.obj = mapOf(KEY_RECORDING to isRecording,
                     KEY_MEDIA_DATA_EXIST to (mediaData != null),
@@ -186,26 +188,9 @@ class RecordService : CoreService() {
         startForeground(hashCode(), notification)
     }
 
-    /*更新屏幕方向*/
-    private fun updateOrientation(configuration: Configuration) {
-        val orientation = configuration.orientation
-        val width = params?.videoResolutionValue?._width!!
-        val height = params?.videoResolutionValue?._height!!
-        if(orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            params?.videoResolutionValue?._width = width.coerceAtLeast(height)
-            params?.videoResolutionValue?._height = height.coerceAtMost(width)
-        } else {
-            params?.videoResolutionValue?._height = width.coerceAtLeast(height)
-            params?.videoResolutionValue?._width = height.coerceAtMost(width)
-        }
-    }
-
     /*开始录制*/
     private fun startRecord() {
         elapsedStartTimeMs = SystemClock.elapsedRealtime()
-
-        updateOrientation(resources.configuration)
-        muxer.start(params!!, mediaProjection)
 
         // 发送成功消息到客户端
         val message = Message.obtain(handler, MSG_RECORD_START)
@@ -214,6 +199,36 @@ class RecordService : CoreService() {
         message.data = data
         message.obj = RES_OK
         sendMessage(message)
+
+        val params: RecordBean = params?.copy()!!
+        var direction = params.videoDirection
+        val resolution = params.videoResolutionValue
+        val width = resolution.width
+        val height = resolution.height
+        // 启动时使用屏幕的方向来设置宽高
+        if (direction == RecordBean.DIRECTION_AUTO) {
+            val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+            params.rotation = rotation
+            ILog.d(TAG, "default rotation : $rotation")
+            direction = when(rotation) {
+                Surface.ROTATION_0, Surface.ROTATION_180 -> {
+                    RecordBean.DIRECTION_VERTICAL
+                }
+                else -> {
+                    RecordBean.DIRECTION_LANDSCAPE
+                }
+            }
+        }
+        // 纠正屏幕的宽高
+        if(direction == RecordBean.DIRECTION_LANDSCAPE) {
+            resolution._width = width.coerceAtLeast(height)
+            resolution._height = height.coerceAtMost(width)
+        } else {
+            resolution._height = width.coerceAtLeast(height)
+            resolution._width = height.coerceAtMost(width)
+        }
+        ILog.d(TAG, "direction: $direction, origin: ${params.videoDirection}, resolution : $resolution")
+        muxer.start(params, mediaProjection)
     }
 
     /*停止录制*/

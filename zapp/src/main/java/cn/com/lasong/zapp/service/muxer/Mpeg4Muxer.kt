@@ -2,9 +2,11 @@ package cn.com.lasong.zapp.service.muxer
 
 import android.media.MediaMuxer
 import android.media.projection.MediaProjection
+import cn.com.lasong.utils.ILog
 import cn.com.lasong.utils.TN
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.data.RecordBean
+import cn.com.lasong.zapp.service.RecordService
 import kotlinx.coroutines.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -28,7 +30,19 @@ class Mpeg4Muxer {
         const val STATE_START = 1
         const val STATE_RUNNING = 2
         const val STATE_STOP = 3
+
+        // 开始&经过的时间
+        var startPtsNs = 0L
+        var elapsedPtsNs = 0L
+            get() {
+                val now = System.nanoTime()
+                if (startPtsNs <= 0) {
+                    startPtsNs = now
+                }
+                return now - startPtsNs
+            }
     }
+
     // 协程域, SupervisorJob 一个子协程出错, 不会影响其他的子协程, Job会传递错误
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -56,6 +70,11 @@ class Mpeg4Muxer {
      * 开始录制并合成MP4文件
      */
     fun start(params: RecordBean, projection: MediaProjection?) {
+        if (isStart(FLAG_VIDEO) || isStart(FLAG_AUDIO)) {
+            ILog.d(RecordService.TAG, "is Start video : ${isStart(FLAG_VIDEO)}," +
+                    " audio : ${isStart(FLAG_AUDIO)}")
+            return
+        }
         this.params = params
         val simpleDateFormat = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
         val fileName = simpleDateFormat.format(Calendar.getInstance().time)
@@ -68,13 +87,17 @@ class Mpeg4Muxer {
         if (params.audioEnable) {
             audioCapture = AudioCapture(scope)
             audioCapture?.start(params)
+            muxerFlag = muxerFlag or FLAG_AUDIO
         }
 
         // 视频
         if (params.videoEnable) {
             videoCapture = VideoCapture(scope)
             videoCapture?.start(params, projection!!)
+            muxerFlag = muxerFlag or FLAG_VIDEO
         }
+
+        ILog.d(RecordService.TAG, "elapsedPtsNs : $elapsedPtsNs")
     }
 
     /**
@@ -82,9 +105,15 @@ class Mpeg4Muxer {
      */
     fun stop() {
         scope.launch {
-            audioCapture?.stop()
-            videoCapture?.unInitEgl()
-            videoCapture?.stop()
+            if (isStart(FLAG_AUDIO)) {
+                audioCapture?.stop()
+                muxerFlag = muxerFlag and FLAG_AUDIO.inv()
+            }
+            if (isStart(FLAG_VIDEO)) {
+                videoCapture?.unInitEgl()
+                videoCapture?.stop()
+                muxerFlag = muxerFlag and FLAG_VIDEO.inv()
+            }
             // 等待音视频结束再停止合成
             try {
                 muxer.stop()
@@ -98,6 +127,7 @@ class Mpeg4Muxer {
             }
             audioCapture?.state = STATE_IDLE
             videoCapture?.state = STATE_IDLE
+            startPtsNs = 0
         }
     }
 
@@ -107,7 +137,15 @@ class Mpeg4Muxer {
     }
 
     /*屏幕方向更改*/
-    fun updateOrientation() {
-        // TODO: 2021/7/23 更改屏幕方向修改GLES
+    fun updateOrientation(rotation: Int) {
+        if (!isStart(FLAG_VIDEO)) {
+            return
+        }
+        ILog.d(RecordService.TAG, "updateOrientation : $rotation")
+        val target = params.rotation
+        if (params.videoDirection == RecordBean.DIRECTION_AUTO && target != rotation) {
+            ILog.d(RecordService.TAG, "change Orientation target : $target, current : $rotation")
+            videoCapture?.rotate(target, rotation)
+        }
     }
 }
