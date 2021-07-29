@@ -39,7 +39,9 @@ class RecordBean(var saveDir: String?,
                  var audioChannel: Int = 0,// 录制开始倒计时
                  var fileName: String? = null, //  文件名
                  var delay: Int = 0, // 延时开始录制时间, 单位s
-                 var rotation: Int = Surface.ROTATION_0 // 视频旋转角度, 默认未旋转, 只有在videoDirection为DIRECTION_AUTO时生效
+                 var rotation: Int = Surface.ROTATION_0, // 视频旋转角度, 默认未旋转, 只有在videoDirection为DIRECTION_AUTO时生效
+                 private val allResolution : Array<Video> = arrayOf(VIDEO_MOBILE, VIDEO_1080P,
+                     VIDEO_720P, VIDEO_480P, VIDEO_360P) // 支持的分辨率
 ) : Parcelable {
 
     constructor() : this(null)
@@ -86,9 +88,9 @@ class RecordBean(var saveDir: String?,
         private val VIDEO_720P = Video(2, 1280, 720, 2160_000)
         private val VIDEO_480P = Video(3, 854, 480, 960_000)
         private val VIDEO_360P = Video(4, 640, 360, 600_000)
-        val allResolution = arrayOf(VIDEO_MOBILE, VIDEO_1080P,
-            VIDEO_720P, VIDEO_480P, VIDEO_360P)
 
+        const val VIEW_CLIP = 0
+        const val VIEW_FILL = 1
     }
 
     init {
@@ -147,7 +149,7 @@ class RecordBean(var saveDir: String?,
                 0 -> {
                     applicationContext().getString(R.string.record_video_resolution_default)
                 } else -> {
-                    "%dp".format(resolution.height)
+                    "%dp".format(resolution._height)
                 }
             }
         }
