@@ -89,4 +89,16 @@ sweep-flag从起点到终点是顺时针还是逆时针画圆弧。
 
 # OpenGL ES Demo
 
+* 一些常用的实现
+
 <https://github.com/kenneycode/OpenGLESPro>
+
+* 横竖屏切换修改VirtualDisplay大小的问题
+
+<https://stackoverflow.com/questions/36274657/android-resize-virtualdisplay>
+
+
+# TODO
+
+* 帧率控制
+* 裁剪模式CENTER矩阵的实现
