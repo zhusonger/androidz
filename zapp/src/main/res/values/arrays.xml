@@ -99,4 +99,8 @@
         <item>5</item>
         <item>10</item>
     </integer-array>
+    <string-array name="array_clip">
+        <item>居中裁剪</item>
+        <item>居中填充</item>
+    </string-array>
 </resources>

@@ -18,12 +18,14 @@ import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp
 import cn.com.lasong.zapp.data.RecordBean
+import cn.com.lasong.zapp.data.RecordVideo
 import cn.com.lasong.zapp.service.RecordService
 import cn.com.lasong.zapp.service.muxer.render.VideoRender
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.IntBuffer
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
 
@@ -39,6 +41,7 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
 
     companion object {
         const val DISPLAY_NAME = "VideoCapture"
+        const val MAX_SIZE = 1280
     }
 
     // 指定线程调度器
@@ -63,9 +66,7 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
     var state = Mpeg4Muxer.STATE_IDLE
 
     // 当前编码宽高
-    var width: Int = 0
-    var height: Int = 0
-    var dpi : Int = 1
+    lateinit var video: RecordVideo
 
     // 屏幕数据纹理
     private var screenTexture = 0
@@ -81,18 +82,20 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
     // 屏幕纹理的矩阵
     private val oesMatrix: FloatArray = FloatArray(16)
 
-    lateinit var path: String
+    // 截屏保存路径
+    private lateinit var screenshotDir: String
+
     /**
      * 开始在指定线程捕获视频
      */
     fun start(params: RecordBean, projection: MediaProjection? = null) {
         val videoResolution = params.videoResolutionValue
-        path = params.saveDir!!
-        width = videoResolution.width
-        height = videoResolution.height
-        dpi = videoResolution.dpi
+        screenshotDir = params.screenshotDir!!
+        video = videoResolution.copy()
+        val renderWidth = videoResolution.renderWidth
+        val renderHeight = videoResolution.renderHeight
         val format = MediaFormat.createVideoFormat(
-            MediaFormat.MIMETYPE_VIDEO_AVC, width, height)
+            MediaFormat.MIMETYPE_VIDEO_AVC, renderWidth, renderHeight)
         // MediaProjection 使用 surface
         format.setInteger(
             MediaFormat.KEY_COLOR_FORMAT,
@@ -168,8 +171,12 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
      * 销毁EGL环境
      */
     fun stop() {
-        videoEncoder.stop()
-        videoEncoder.release()
+        try {
+            videoEncoder.stop()
+            videoEncoder.release()
+        } catch (e: Exception) {
+            ILog.e(RecordService.TAG, e)
+        }
         state = Mpeg4Muxer.STATE_STOP
     }
 
@@ -194,14 +201,14 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
             // 创建屏幕录制镜像 surface
             screenTexture = MEGLHelper.glGenOesTexture(1)[0]
             surfaceTexture = SurfaceTexture(screenTexture)
-            surfaceTexture.setDefaultBufferSize(width, height)
+            surfaceTexture.setDefaultBufferSize(video.actualWidth, video.actualHeight)
             surfaceTexture.setOnFrameAvailableListener(this@VideoCapture)
             displaySurface = Surface(surfaceTexture)
             // 生成水印纹理
             waterTexture = MEGLHelper.glGen2DTexture(1)[0]
             // 初始化视频渲染器
             render = VideoRender(eglHelper.glVersion)
-            render.init(width, height)
+            render.init(video.renderWidth, video.renderHeight, video.matrix)
             // 绑定水印纹理
             if (null != watermark) {
                 render.updateWaterMark(waterTexture, watermark!!)
@@ -215,7 +222,7 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
     private suspend fun initMediaProjection(projection: MediaProjection) {
         // 放在有looper的线程中调用, 否则handler传null会空指针
         withContext(Dispatchers.Main) {
-            virtualDisplay = projection.createVirtualDisplay(DISPLAY_NAME, width, height, dpi,
+            virtualDisplay = projection.createVirtualDisplay(DISPLAY_NAME, video.actualWidth, video.actualHeight, video.dpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC,
                 displaySurface, object : VirtualDisplay.Callback() {
                     override fun onPaused() {
@@ -244,11 +251,14 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
             ILog.d(RecordService.TAG, "release virtualDisplay")
             virtualDisplay?.surface = null
             virtualDisplay?.release()
+            virtualDisplay = null
         }
         withContext(videoDispatcher) {
             ILog.d(RecordService.TAG, "release texture")
             val textures: IntArray = intArrayOf(screenTexture, waterTexture)
             MEGLHelper.glDeleteTextures(textures)
+            screenTexture = 0
+            waterTexture = 0
             render.release()
             surfaceTexture.release()
             displaySurface.release()
@@ -260,20 +270,22 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
     // frame comes one by one, means the callback will not be invoked
     // until SurfaceTexture.updateTexImage() done
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
-        ILog.d(RecordService.TAG, "onFrameAvailable")
         scope.launch (videoDispatcher) {
+            if (screenTexture == 0 || surfaceTexture != this@VideoCapture.surfaceTexture) {
+                return@launch
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && surfaceTexture.isReleased) {
+                return@launch
+            }
             // 1. 获取屏幕数据到oes纹理
-            surfaceTexture?.updateTexImage()
-            surfaceTexture?.getTransformMatrix(oesMatrix) // 纹理矩阵, 一般是校正坐标系统导致的旋转矩阵
-            // 2. gles绘制到编码器surface
+            surfaceTexture.updateTexImage()
+            surfaceTexture.getTransformMatrix(oesMatrix) // 纹理矩阵, 一般是校正坐标系统导致的旋转矩阵
+            // 2. gles绘制->更新时间戳->交换缓冲到编码器surface
             render.doFrame(screenTexture, oesMatrix)
-            capture()
             val ptsNs = Mpeg4Muxer.elapsedPtsNs
-            ILog.d(RecordService.TAG, "elapsedPtsNs : $ptsNs")
             eglHelper.swapBuffer(ptsNs)
-            // 3. 编码器获取数据
+            // 3. 编码器编码并获取数据
             withContext(Dispatchers.IO) {
-
             }
         }
     }
@@ -286,82 +298,111 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
     fun rotate(target: Int, current: Int) {
         // 暂停屏幕数据输出
         virtualDisplay?.surface = null
+        val width: Int
+        val height: Int
+        val dpi = video.dpi
         // 横竖屏切换重新设置宽高
         when(current) {
             // 竖屏
             Surface.ROTATION_0, Surface.ROTATION_180 -> {
-                val newWidth = width.coerceAtMost(height)
-                val newHeight = width.coerceAtLeast(height)
-                virtualDisplay?.resize(newWidth, newHeight, dpi)
-                surfaceTexture.setDefaultBufferSize(newWidth, newHeight)
+                width = video.actualWidth.coerceAtMost(video.actualHeight)
+                height = video.actualWidth.coerceAtLeast(video.actualHeight)
             }
             // 横屏
             else -> {
-                val newWidth = width.coerceAtLeast(height)
-                val newHeight = width.coerceAtMost(height)
-                virtualDisplay?.resize(newWidth, newHeight, dpi)
-                surfaceTexture.setDefaultBufferSize(newWidth, newHeight)
+                width = video.actualWidth.coerceAtLeast(video.actualHeight)
+                height = video.actualWidth.coerceAtMost(video.actualHeight)
             }
         }
-        // 更新旋转矩阵, 把新的屏幕方向转回到开始录制时的方向
-        render.rotate(target, current)
-        capture = true
-        // 恢复屏幕数据输出
-        virtualDisplay?.surface = displaySurface
+        scope.launch(videoDispatcher) {
+            // !! 这里需要重新创建surface, 原来的surface宽高已经固定
+            // 否则virtualDisplay渲染到surface不正确
+            surfaceTexture.release()
+            displaySurface.release()
+
+            surfaceTexture = SurfaceTexture(screenTexture)
+            surfaceTexture.setDefaultBufferSize(width, height)
+            surfaceTexture.setOnFrameAvailableListener(this@VideoCapture)
+            displaySurface = Surface(surfaceTexture)
+
+            surfaceTexture.setDefaultBufferSize(width, height)
+            virtualDisplay?.resize(width, height, dpi)
+            ILog.d(RecordService.TAG, "rotate $width x $height")
+            // 更新旋转矩阵, 把新的屏幕方向转回到开始录制时的方向
+            render.rotate(target, current)
+            // 恢复屏幕数据输出
+            virtualDisplay?.surface = displaySurface
+        }
     }
 
-    var capture = true
-    var count = 0
-    private suspend fun capture() {
-        if (capture) {
-            capture = false
-            val capacity: Int = width * height
-            val buffer: IntBuffer = IntBuffer.allocate(capacity)
-            // from left bottom, 0, 0
-            // from left bottom, 0, 0
+    /**
+     * 截图返回截图路径
+     */
+    suspend fun capture() : String? {
+        var renderWidth = video.renderWidth
+        var renderHeight = video.renderHeight
+        val maxSide = renderWidth.coerceAtLeast(renderHeight)
+        if (maxSide > MAX_SIZE) { // 最大边超出最大范围, 缩小
+            val ratio = MAX_SIZE / maxSide
+            renderWidth *= ratio
+            renderHeight *= ratio
+        }
+        val capacity: Int = renderWidth * renderHeight
+        val buffer: IntBuffer = IntBuffer.allocate(capacity)
+        withContext(videoDispatcher) {
             GLES20.glReadPixels(
-                0, 0, width, height,
+                0, 0, renderWidth, renderHeight,
                 GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buffer
             )
-
-            val pixels = IntArray(capacity)
-            val fixPixels: IntArray = pixels.copyOf(capacity)
-            buffer.get(pixels)
-            withContext(Dispatchers.Default) {
-                // glReadPixels output data is reverse
-                // simple : RBGA -> ABGR pix[0,0] -> pix[0, h]
-                // glReadPixels output data is reverse
-                // simple : RBGA -> ABGR pix[0,0] -> pix[0, h]
-                val width: Int = width
-                val height: Int = height
-                for (i in 0 until capacity) {
-                    val pixel = pixels[i] // pixel dot
-                    // data is ABGR, we need ARGB
-                    val pA_G_ = pixel and -0xff0100
-                    val p___B = pixel shr 16 and 0xFF
-                    val p_R__ = pixel and 0xFF shl 16
-                    val fixPixel = pA_G_ or p_R__ or p___B
-                    val row = i / width
-                    val col = i % width
-                    val fixIndex = (height - row - 1) * width + col
-                    fixPixels[fixIndex] = fixPixel
-                }
-            }
-            withContext(Dispatchers.IO) {
-                try {
-                    val bmp = Bitmap.createBitmap(
-                        fixPixels,
-                        width,
-                        height,
-                        Bitmap.Config.ARGB_8888
-                    )
-                    val fos = FileOutputStream(File(path, "capture_$count.png"))
-                    bmp?.compress(Bitmap.CompressFormat.PNG, 100, fos)
-                    fos.close()
-                } catch (e: Exception) {
-                    ILog.e(RecordService.TAG, "screenCapture createBitmap", e)
-                }
+        }
+        val pixels = IntArray(capacity)
+        val fixPixels: IntArray = pixels.copyOf(capacity)
+        buffer.get(pixels)
+        withContext(Dispatchers.Default) {
+            // glReadPixels output data is reverse
+            // simple : RBGA -> ABGR pix[0,0] -> pix[0, h]
+            val width: Int = renderWidth
+            val height: Int = renderHeight
+            for (i in 0 until capacity) {
+                val pixel = pixels[i] // pixel dot
+                // data is ABGR, we need ARGB
+                val pAxGx = pixel and -0xff0100
+                val pxxxB = pixel shr 16 and 0xFF
+                val pxRxx = pixel and 0xFF shl 16
+                val fixPixel = pAxGx or pxRxx or pxxxB
+                val row = i / width
+                val col = i % width
+                val fixIndex = (height - row - 1) * width + col
+                fixPixels[fixIndex] = fixPixel
             }
         }
+        val path: String? = withContext(Dispatchers.IO) {
+            val bitmap: Bitmap
+            try {
+                bitmap = Bitmap.createBitmap(
+                    fixPixels,
+                    renderWidth,
+                    renderHeight,
+                    Bitmap.Config.ARGB_8888
+                )
+            } catch (e: Exception) {
+                ILog.e(RecordService.TAG, "screenCapture createBitmap", e)
+                return@withContext null
+            }
+
+            return@withContext runCatching {
+                val simpleDateFormat =
+                    SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
+                val fileName = simpleDateFormat.format(Calendar.getInstance().time)
+                val file = File(this@VideoCapture.screenshotDir, "capture_$fileName.png")
+                val fos = FileOutputStream(file)
+                bitmap?.compress(Bitmap.CompressFormat.PNG, 100, fos)
+                fos.close()
+                return@runCatching file.absolutePath
+            }.getOrNull()
+        }
+
+        ILog.d(RecordService.TAG, "capture path: $path")
+        return path
     }
 }

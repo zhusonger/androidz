@@ -16,6 +16,7 @@
     <string name="home_record_camera_subtitle">超清、高清、标清</string>
     <string name="record_video_direction">方向</string>
     <string name="record_video_resolution">分辨率</string>
+    <string name="record_video_clip_mode">裁剪</string>
     <string name="record_bitrate">码率</string>
     <string name="record_bitrate_hint">码率与录制视频的质量以及文件大小成正比</string>
     <string name="record_video_fps">帧率</string>
@@ -25,6 +26,7 @@
     <string name="record_store_free">可用空间</string>
     <string name="record_label_video_params">视频参数</string>
     <string name="record_video_resolution_default">手机分辨率</string>
+    <string name="record_video_clip_default">居中填充</string>
     <string name="record_label_audio_params">音频参数</string>
     <string name="record_channel_default">单声道</string>
     <string name="record_label_audio_enable">是否开启录音</string>

@@ -3,6 +3,8 @@ package cn.com.lasong.zapp.service.muxer.render
 import android.graphics.Bitmap
 import android.opengl.Matrix
 import cn.com.lasong.media.gles.MEGLHelper
+import cn.com.lasong.utils.ILog
+import cn.com.lasong.zapp.service.RecordService
 
 /**
  * Author: song.zhu
@@ -132,6 +134,8 @@ class VideoRender(glVersion: Int = 3) {
 
     fun doFrame(oesTexture: Int, oesMatrix: FloatArray) {
         if (isMatrix) {
+            ILog.d(RecordService.TAG, "doFrame update matrix")
+            Matrix.setIdentityM(mvpMatrix, 0)
             // gl_Position = projection * view * model * rotate * vec4(position)
             // 1. model * rotate 对物体进行旋转, 进行模型转换, 从模型坐标转换到世界坐标
             Matrix.multiplyMM(
@@ -181,12 +185,13 @@ class VideoRender(glVersion: Int = 3) {
 
     /**
      * 初始化渲染类
-     * @param width 渲染内容宽
-     * @param height 渲染内容高
+     * @param renderWidth 渲染内容宽
+     * @param renderHeight 渲染内容高
+     * @param matrix 真实画面的宽高与渲染画面的宽高投影的矩阵
      */
-    fun init(width: Int, height: Int): Boolean {
-        renderWidth = width
-        renderHeight = height
+    fun init(renderWidth: Int, renderHeight: Int, matrix: FloatArray): Boolean {
+        this.renderWidth = renderWidth
+        this.renderHeight = renderHeight
         // 模型/旋转矩阵默认单位矩阵
         Matrix.setIdentityM(rotateMatrix, 0)
         Matrix.setIdentityM(modelMatrix, 0)
@@ -195,8 +200,7 @@ class VideoRender(glVersion: Int = 3) {
         Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
         // 设置投影矩阵, 高度撑满, 宽度自适应内容的比例
         // near/far就是投影的近/远平面, 方向是视图矩阵定义的方向(eye到center的方向)
-        val ratio = width.toFloat() / height
-        Matrix.orthoM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 1f, 3f)
+        System.arraycopy(matrix, 0, projectionMatrix, 0, matrix.size)
         return init()
     }
 

@@ -22,9 +22,9 @@ import cn.com.lasong.zapp.BuildConfig
 import cn.com.lasong.zapp.MainViewModel
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
-import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.RecordKey
 import cn.com.lasong.zapp.data.RecordState
+import cn.com.lasong.zapp.data.SIZE_MIN_VALUE
 import cn.com.lasong.zapp.databinding.FragmentRecordScreenBinding
 import cn.com.lasong.zapp.ui.all.ConfirmDialog
 import cn.com.lasong.zapp.ui.all.OptionDialog
@@ -53,7 +53,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
         viewModel.params.observe(viewLifecycleOwner, {
             binding.tvFreeSize.text = it.freeSizeDisplay
             when {
-                it.appFreeSize >= RecordBean.SIZE_MIN_VALUE -> {
+                it.appFreeSize >= SIZE_MIN_VALUE -> {
                     binding.tvFreeSize.setTextColor(
                         ContextCompat.getColor(
                             applicationContext(),
@@ -72,6 +72,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             }
             binding.tvVideoDirection.text = it.directionDisplay
             binding.tvVideoResolution.text = it.videoResolutionDisplay
+            binding.tvVideoClipMode.text = it.clipModeDisplay
             binding.tvVideoBitrate.text = it.videoBitrateDisplay
             binding.tvVideoFps.text = it.videoFpsDisplay
             binding.stAudio.isChecked = it.audioEnable
@@ -88,6 +89,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
         binding.llFreeSize.setOnClickListener(this)
         binding.llVideoDirection.setOnClickListener(this)
         binding.llResolution.setOnClickListener(this)
+        binding.llClipMode.setOnClickListener(this)
         binding.llVideoBitrate.setOnClickListener(this)
         binding.llFps.setOnClickListener(this)
 
@@ -151,6 +153,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             }
             binding.llVideoDirection,
             binding.llResolution,
+            binding.llClipMode,
             binding.llVideoBitrate,
             binding.llFps,
             binding.llSampleRate,
@@ -160,6 +163,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                 val key = when (v) {
                     binding.llVideoDirection -> RecordKey.DIRECTION
                     binding.llResolution -> RecordKey.RESOLUTION
+                    binding.llClipMode -> RecordKey.CLIP_MODE
                     binding.llVideoBitrate -> RecordKey.VIDEO_BITRATE
                     binding.llFps -> RecordKey.FPS
                     binding.llSampleRate -> RecordKey.SAMPLE_RATE
@@ -193,6 +197,11 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                 title = context.getString(R.string.record_video_resolution)
                 array = resources.getStringArray(R.array.array_resolution)
                 selectIndex = viewModel.params.value?.videoResolution!!
+            }
+            RecordKey.CLIP_MODE -> {
+                title = context.getString(R.string.record_video_clip_mode)
+                array = resources.getStringArray(R.array.array_clip)
+                selectIndex = viewModel.params.value?.clipMode!!
             }
             RecordKey.VIDEO_BITRATE -> {
                 title = context.getString(R.string.record_bitrate)

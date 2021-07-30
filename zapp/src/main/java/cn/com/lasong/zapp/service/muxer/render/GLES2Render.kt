@@ -133,6 +133,8 @@ class GLES2Render : GLESRender {
         GLES20.glViewport(0, 0, width, height)
         GLES20.glUseProgram(program)
 
+        GLES20.glClearColor(1.0f, 0.0f, 0.0f, 1.0f)
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         // vertex
         // 更新世界坐标
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, worldPositionBuffer)

@@ -51,6 +51,7 @@ open class MainViewModel : ViewModel() {
         when(key) {
             RecordKey.DIRECTION -> value?.videoDirection = position
             RecordKey.RESOLUTION -> value?.videoResolution = position
+            RecordKey.CLIP_MODE -> value?.clipMode = position
             RecordKey.VIDEO_BITRATE -> value?.videoBitrate = position
             RecordKey.FPS -> value?.videoFps = position
             RecordKey.SAMPLE_RATE -> value?.audioSampleRate = position

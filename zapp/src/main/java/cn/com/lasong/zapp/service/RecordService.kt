@@ -1,8 +1,10 @@
 package cn.com.lasong.zapp.service
 
 import android.app.*
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.graphics.Color
 import android.media.projection.MediaProjection
@@ -17,8 +19,10 @@ import androidx.core.app.NotificationCompat
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.MainActivity
 import cn.com.lasong.zapp.R
+import cn.com.lasong.zapp.data.DIRECTION_AUTO
+import cn.com.lasong.zapp.data.DIRECTION_LANDSCAPE
+import cn.com.lasong.zapp.data.DIRECTION_VERTICAL
 import cn.com.lasong.zapp.data.RecordBean
-import cn.com.lasong.zapp.data.copy
 import cn.com.lasong.zapp.service.muxer.Mpeg4Muxer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -75,9 +79,22 @@ class RecordService : CoreService() {
         }
     }
 
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            ILog.d(TAG,"onConfigurationChanged BroadcastReceiver")
+            val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+            muxer.updateOrientation(rotation)
+        }
+
+    }
+    override fun onCreate() {
+        super.onCreate()
+        registerReceiver(receiver, IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED))
+    }
     override fun onDestroy() {
         super.onDestroy()
         ILog.d(TAG,"onDestroy")
+        unregisterReceiver(receiver)
         /*销毁时取消协程域*/
         muxer.cancel()
         scope.cancel()
@@ -85,9 +102,9 @@ class RecordService : CoreService() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        ILog.d("onConfigurationChanged $newConfig")
-        val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
-        muxer.updateOrientation(rotation)
+        ILog.d(TAG,"onConfigurationChanged Service $newConfig")
+//        val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
+//        muxer.updateOrientation(rotation)
     }
 
     override fun handleMessage(msg: Message): Boolean {
@@ -203,31 +220,27 @@ class RecordService : CoreService() {
         val params: RecordBean = params?.copy()!!
         var direction = params.videoDirection
         val resolution = params.videoResolutionValue
-        val width = resolution.width
-        val height = resolution.height
         // 启动时使用屏幕的方向来设置宽高
-        if (direction == RecordBean.DIRECTION_AUTO) {
+        if (direction == DIRECTION_AUTO) {
             val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
             params.rotation = rotation
             ILog.d(TAG, "default rotation : $rotation")
             direction = when(rotation) {
                 Surface.ROTATION_0, Surface.ROTATION_180 -> {
-                    RecordBean.DIRECTION_VERTICAL
+                    DIRECTION_VERTICAL
                 }
                 else -> {
-                    RecordBean.DIRECTION_LANDSCAPE
+                    DIRECTION_LANDSCAPE
                 }
             }
         }
-        // 纠正屏幕的宽高
-        if(direction == RecordBean.DIRECTION_LANDSCAPE) {
-            resolution._width = width.coerceAtLeast(height)
-            resolution._height = height.coerceAtMost(width)
-        } else {
-            resolution._height = width.coerceAtLeast(height)
-            resolution._width = height.coerceAtMost(width)
-        }
         ILog.d(TAG, "direction: $direction, origin: ${params.videoDirection}, resolution : $resolution")
+        // 校正方向
+        resolution.coerceDirection(direction)
+        // 调整宽高靠近手机分辨率比例
+        resolution.alignToMobileRatio()
+        // 更新投影矩阵
+        resolution.updateMatrix(params.clipMode)
         muxer.start(params, mediaProjection)
     }
 

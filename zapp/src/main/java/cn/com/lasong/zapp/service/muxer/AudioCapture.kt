@@ -2,7 +2,9 @@ package cn.com.lasong.zapp.service.muxer
 
 import android.media.MediaCodec
 import android.media.MediaFormat
+import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.data.RecordBean
+import cn.com.lasong.zapp.service.RecordService
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -33,9 +35,12 @@ class AudioCapture(scope: CoroutineScope) {
     }
 
     fun stop() {
-        // TODO: 2021/7/23 添加最后一帧数据 
-        audioEncoder.stop()
-        audioEncoder.release()
+        try {
+            audioEncoder.stop()
+            audioEncoder.release()
+        } catch (e: Exception) {
+            ILog.e(RecordService.TAG, e)
+        }
         state = Mpeg4Muxer.STATE_STOP
     }
 }

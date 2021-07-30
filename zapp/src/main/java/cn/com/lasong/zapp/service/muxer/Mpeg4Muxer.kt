@@ -2,9 +2,11 @@ package cn.com.lasong.zapp.service.muxer
 
 import android.media.MediaMuxer
 import android.media.projection.MediaProjection
+import android.view.Surface
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.utils.TN
 import cn.com.lasong.zapp.R
+import cn.com.lasong.zapp.data.DIRECTION_AUTO
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.service.RecordService
 import kotlinx.coroutines.*
@@ -61,6 +63,9 @@ class Mpeg4Muxer {
     // 合成
     private var muxerFlag = FLAG_IDLE
 
+    // 当前屏幕的旋转方向
+    private var currentRotation = Surface.ROTATION_0
+
     /*判断音频/视频是否启动*/
     fun isStart(flag: Int) : Boolean {
         return (muxerFlag and flag) == flag
@@ -76,6 +81,7 @@ class Mpeg4Muxer {
             return
         }
         this.params = params
+        currentRotation = params.rotation
         val simpleDateFormat = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
         val fileName = simpleDateFormat.format(Calendar.getInstance().time)
         params.fileName = "Screen_$fileName.mp4"
@@ -96,8 +102,6 @@ class Mpeg4Muxer {
             videoCapture?.start(params, projection!!)
             muxerFlag = muxerFlag or FLAG_VIDEO
         }
-
-        ILog.d(RecordService.TAG, "elapsedPtsNs : $elapsedPtsNs")
     }
 
     /**
@@ -141,9 +145,9 @@ class Mpeg4Muxer {
         if (!isStart(FLAG_VIDEO)) {
             return
         }
-        ILog.d(RecordService.TAG, "updateOrientation : $rotation")
         val target = params.rotation
-        if (params.videoDirection == RecordBean.DIRECTION_AUTO && target != rotation) {
+        if (params.videoDirection == DIRECTION_AUTO && rotation != currentRotation) {
+            currentRotation = rotation
             ILog.d(RecordService.TAG, "change Orientation target : $target, current : $rotation")
             videoCapture?.rotate(target, rotation)
         }
