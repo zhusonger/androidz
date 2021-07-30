@@ -5,14 +5,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.res.Configuration
 import android.graphics.Color
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
-import android.os.Build
-import android.os.Bundle
-import android.os.Message
-import android.os.SystemClock
+import android.os.*
+import android.os.PowerManager.WakeLock
 import android.view.Surface
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
@@ -53,6 +50,7 @@ class RecordService : CoreService() {
         const val CHANNEL_ID = "RECORD_VIDEO_CHANNEL_ID"
 
         const val TAG = "RecordService"
+        const val LOCK_NAME = "$TAG:wakeLock"
     }
 
     // 是否正在录制
@@ -72,25 +70,30 @@ class RecordService : CoreService() {
     // 协程域, SupervisorJob 一个子协程出错, 不会影响其他的子协程, Job会传递错误
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    // 监听MP停止时自动停止录制
     private val callback : MediaProjection.Callback = object : MediaProjection.Callback() {
         override fun onStop() {
             super.onStop()
             stopRecord()
         }
     }
-
+    // onConfigurationChanged 2个横屏状态互相转换的时候不会回调, 监听系统广播
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             ILog.d(TAG,"onConfigurationChanged BroadcastReceiver")
             val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
             muxer.updateOrientation(rotation)
         }
-
     }
+
+    // 常亮控制
+    private var wakeLock: WakeLock? = null
+
     override fun onCreate() {
         super.onCreate()
         registerReceiver(receiver, IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED))
     }
+
     override fun onDestroy() {
         super.onDestroy()
         ILog.d(TAG,"onDestroy")
@@ -98,13 +101,6 @@ class RecordService : CoreService() {
         /*销毁时取消协程域*/
         muxer.cancel()
         scope.cancel()
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        ILog.d(TAG,"onConfigurationChanged Service $newConfig")
-//        val rotation = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay.rotation
-//        muxer.updateOrientation(rotation)
     }
 
     override fun handleMessage(msg: Message): Boolean {
@@ -209,6 +205,16 @@ class RecordService : CoreService() {
     private fun startRecord() {
         elapsedStartTimeMs = SystemClock.elapsedRealtime()
 
+        // 获取常亮锁
+        if (null == wakeLock) {
+            val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+            wakeLock = powerManager.newWakeLock(
+                PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE,
+                LOCK_NAME
+            )
+            wakeLock?.acquire(300)
+        }
+
         // 发送成功消息到客户端
         val message = Message.obtain(handler, MSG_RECORD_START)
         val data = Bundle()
@@ -246,6 +252,10 @@ class RecordService : CoreService() {
 
     /*停止录制*/
     private fun stopRecord() {
+        if (wakeLock?.isHeld == true) {
+            wakeLock?.release()
+            wakeLock = null
+        }
         muxer.stop()
         mediaProjection?.unregisterCallback(callback)
         mediaProjection = null
