@@ -120,8 +120,8 @@ class RecordService : CoreService() {
                 isRecording = true
                 val data = msg.obj as Intent
                 if (data.hasExtra(KEY_RECORD_PARAMS)) {
-                    val params = data.getParcelableExtra(KEY_RECORD_PARAMS) as RecordBean
-                    this.params = params.copy()
+                    val params = data.getParcelableExtra(KEY_RECORD_PARAMS) as RecordBean?
+                    this.params = params?.copy()
                     data.removeExtra(KEY_RECORD_PARAMS)
                 }
                 // 开始录制
