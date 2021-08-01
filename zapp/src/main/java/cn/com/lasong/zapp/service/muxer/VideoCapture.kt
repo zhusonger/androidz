@@ -24,6 +24,7 @@ import cn.com.lasong.zapp.service.muxer.render.VideoRender
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.ByteBuffer
 import java.nio.IntBuffer
 import java.text.SimpleDateFormat
 import java.util.*
@@ -37,7 +38,7 @@ import java.util.concurrent.Executors
  * Description:
  * 视频捕获
  */
-class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableListener {
+class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableListener {
 
     companion object {
         const val DISPLAY_NAME = "VideoCapture"
@@ -85,6 +86,18 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
     // 截屏保存路径
     private lateinit var screenshotDir: String
 
+    // 单帧时间跨度 ns
+    private var minSpanPtsNs: Long = 0
+    // 上次渲染的时间戳
+    private var lastRenderPtsNs: Long = 0
+
+    // 总帧数
+    private var frameCount = 0L
+    // 一帧平均处理时长
+    private var frameProcessAvgMs = 0L
+    // 补帧协程任务
+    private var fillFrameJob: Job? = null
+
     /**
      * 开始在指定线程捕获视频
      */
@@ -92,6 +105,7 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
         val videoResolution = params.videoResolutionValue
         screenshotDir = params.screenshotDir!!
         video = videoResolution.copy()
+        minSpanPtsNs = 1000_000_000L / params.videoFpsValue
         val renderWidth = videoResolution.renderWidth
         val renderHeight = videoResolution.renderHeight
         val format = MediaFormat.createVideoFormat(
@@ -170,14 +184,32 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
      * 停止捕获
      * 销毁EGL环境
      */
-    fun stop() {
-        try {
-            videoEncoder.stop()
-            videoEncoder.release()
-        } catch (e: Exception) {
-            ILog.e(RecordService.TAG, e)
-        }
+    suspend fun stop() {
         state = Mpeg4Muxer.STATE_STOP
+        ILog.d(RecordService.TAG, "VideoCapture stop EGL")
+        withContext(videoDispatcher) {
+            unInitEgl()
+            ILog.d(RecordService.TAG, "VideoCapture stop EGL Done")
+        }
+        ILog.d(RecordService.TAG, "VideoCapture stop MediaCodec")
+        withContext(Dispatchers.IO) {
+            try {
+                videoEncoder.signalEndOfInputStream()
+                // 获取最后的帧数据
+                var endOfStream: Boolean
+                do {
+                    endOfStream = doDrainFrame(true)
+                } while (endOfStream)
+
+                videoEncoder.stop()
+                videoEncoder.release()
+            } catch (e: Exception) {
+                ILog.e(RecordService.TAG, e)
+            }
+        }
+
+        ILog.d(RecordService.TAG, "VideoCapture stop MediaCodec Done")
+        state = Mpeg4Muxer.STATE_IDLE
     }
 
     /**
@@ -246,7 +278,7 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
     /**
      * 销毁EGL环境
      */
-    suspend fun unInitEgl() {
+    private suspend fun unInitEgl() {
         withContext(Dispatchers.Main) {
             ILog.d(RecordService.TAG, "release virtualDisplay")
             virtualDisplay?.surface = null
@@ -265,31 +297,146 @@ class VideoCapture(val scope: CoroutineScope) : SurfaceTexture.OnFrameAvailableL
             eglHelper.release()
             ILog.d(RecordService.TAG, "release texture done")
         }
+        fillFrameJob?.cancel("unInitEgl")
+        fillFrameJob = null
     }
 
     // frame comes one by one, means the callback will not be invoked
     // until SurfaceTexture.updateTexImage() done
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
-        scope.launch (videoDispatcher) {
-            if (screenTexture == 0 || surfaceTexture != this@VideoCapture.surfaceTexture) {
-                return@launch
+        // 已经停止, 忽略
+        if (state == Mpeg4Muxer.STATE_IDLE) {
+            return
+        }
+        // 已经启动了 更新为正在运行
+        if (state == Mpeg4Muxer.STATE_START) {
+            state = Mpeg4Muxer.STATE_RUNNING
+        }
+        // 补帧协程
+        fillFrameJob?.cancel("NewFrame")
+        fillFrameJob = scope.async(start = CoroutineStart.LAZY) {
+            try {
+                while (isActive) {
+                    if (state == Mpeg4Muxer.STATE_IDLE) {
+                        break
+                    }
+                    delay(minSpanPtsNs/1000_000)
+                    doFrame(false)
+                    ILog.d(RecordService.TAG, "2. Fill Frame Done")
+                }
+            } catch (e: Exception) {
+//                ILog.e(RecordService.TAG, e)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && surfaceTexture.isReleased) {
-                return@launch
-            }
-            // 1. 获取屏幕数据到oes纹理
-            surfaceTexture.updateTexImage()
-            surfaceTexture.getTransformMatrix(oesMatrix) // 纹理矩阵, 一般是校正坐标系统导致的旋转矩阵
-            // 2. gles绘制->更新时间戳->交换缓冲到编码器surface
-            render.doFrame(screenTexture, oesMatrix)
-            val ptsNs = Mpeg4Muxer.elapsedPtsNs
-            eglHelper.swapBuffer(ptsNs)
-            // 3. 编码器编码并获取数据
-            withContext(Dispatchers.IO) {
+        }
+
+        scope.launch {
+            try {
+                if (doFrame()) {
+                    ILog.d(RecordService.TAG, "1. New Frame Done")
+                    fillFrameJob?.start()
+                }
+            } catch (e: Exception) {
+//                ILog.e(RecordService.TAG, e)
             }
         }
     }
 
+    /**
+     * 检测纹理是否可用
+     */
+    private fun isTextureActive(): Boolean {
+        if (screenTexture == 0 || surfaceTexture != this@VideoCapture.surfaceTexture) {
+            return false
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && surfaceTexture.isReleased) {
+            return false
+        }
+        return true
+    }
+    /**
+     * 执行一帧的渲染与编码
+     */
+    private suspend fun doFrame(update: Boolean = true) : Boolean{
+        // 间隔时间小于单帧时间间隔, 丢弃这帧
+        val ptsNs = Mpeg4Muxer.elapsedPtsNs
+        val spanTimeNs = System.nanoTime() - lastRenderPtsNs
+        // 丢帧处理
+        if ((ptsNs > 0) and (spanTimeNs < minSpanPtsNs)) {
+            // 延迟剩余的时间
+            val delayMs = (minSpanPtsNs - spanTimeNs) / 1000_000
+            delay((delayMs - frameProcessAvgMs).coerceAtLeast(0))
+        }
+        lastRenderPtsNs = System.nanoTime()
+        ILog.d(RecordService.TAG, "doFrame 1: EGL")
+        // 1. 渲染屏幕数据
+        val ret = withContext(videoDispatcher) {
+            if (!isTextureActive()) {
+                return@withContext false
+            }
+            // 1. 获取屏幕数据到oes纹理
+            if (update) {
+                ILog.d(RecordService.TAG, "doFrame 1.1: updateTexImage")
+                surfaceTexture.updateTexImage()
+                surfaceTexture.getTransformMatrix(oesMatrix) // 纹理矩阵, 一般是校正坐标系统导致的旋转矩阵
+            }
+            ILog.d(RecordService.TAG, "doFrame 1.2: doRender")
+            // 2. gles绘制->更新时间戳->交换缓冲到编码器surface
+            render.doRender(screenTexture, oesMatrix)
+            eglHelper.swapBuffer(ptsNs)
+            return@withContext true
+        }
+        val processEnd = System.nanoTime()
+        frameProcessAvgMs = (((frameProcessAvgMs * frameCount) + (processEnd - lastRenderPtsNs) / 1000_000) / ++frameCount)
+
+        ILog.d(RecordService.TAG, "doFrame 2: MediaCodec, render = $ret")
+        // 2. 编码器编码并获取数据
+        withContext(Dispatchers.IO) {
+            while (isActive) {
+                if (state == Mpeg4Muxer.STATE_IDLE || !doDrainFrame()) {
+                    break
+                }
+            }
+        }
+        return ret
+    }
+
+    /**
+     * 获取编码后的帧数据
+     */
+    private fun doDrainFrame(endOfStream: Boolean = false): Boolean {
+        val info = MediaCodec.BufferInfo()
+        val bufferIndex: Int = videoEncoder.dequeueOutputBuffer(info, 0)
+        if (bufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+            val format: MediaFormat = videoEncoder.outputFormat
+            ILog.d(RecordService.TAG, "Video format : $format")
+        } else if (bufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
+            ILog.d(RecordService.TAG, "Video INFO_TRY_AGAIN_LATER")
+            // 等待结束标志读取结束
+            if (endOfStream) {
+                return true
+            }
+            return false
+        } else if (bufferIndex < 0) {
+            ILog.d(RecordService.TAG, "Video bufferIndex < 0")
+        } else if (bufferIndex >= 0) {
+            val data: ByteBuffer? = videoEncoder.getOutputBuffer(bufferIndex)
+            if (null != data) {
+                data.position(info.offset)
+                data.limit(info.offset + info.size)
+                info.offset = 0
+            }
+            val encoderPtsNs = info.presentationTimeUs * 1000
+            ILog.d(RecordService.TAG, "Video getOutputBuffer $bufferIndex : len = ${data?.limit()}," +
+                    " encoderPtsNs = $encoderPtsNs")
+
+            videoEncoder.releaseOutputBuffer(bufferIndex, false)
+            if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+                ILog.d(RecordService.TAG, "Video BUFFER_FLAG_END_OF_STREAM")
+                return false
+            }
+        }
+        return true
+    }
     /**
      * 处理旋转矩阵来保证屏幕转向时, 渲染时把画面转回到原来的位置
      * @param target 目标屏幕的方向

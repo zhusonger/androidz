@@ -132,7 +132,7 @@ class VideoRender(glVersion: Int = 3) {
         return ret
     }
 
-    fun doFrame(oesTexture: Int, oesMatrix: FloatArray) {
+    fun doRender(oesTexture: Int, oesMatrix: FloatArray) {
         if (isMatrix) {
             ILog.d(RecordService.TAG, "doFrame update matrix")
             Matrix.setIdentityM(mvpMatrix, 0)

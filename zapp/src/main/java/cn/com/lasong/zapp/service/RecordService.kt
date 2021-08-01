@@ -129,7 +129,14 @@ class RecordService : CoreService() {
                     mediaData = data
                 }
                 val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-                mediaProjection = manager.getMediaProjection(Activity.RESULT_OK, mediaData!!)
+                // TODO: 2021/8/1 还没仔细研究, 有些设备需要这样重新获取, 有些需要复用之前的
+                val projection = runCatching {
+                    return@runCatching manager.getMediaProjection(Activity.RESULT_OK, mediaData!!)
+                }.getOrNull()
+                // 能正确获取到就更新, 否则报错了就用之前那个
+                if (null != projection) {
+                    mediaProjection = projection
+                }
                 mediaProjection?.registerCallback(callback, null)
                 if (null != mediaProjection) {
                     startRecord()
@@ -252,12 +259,12 @@ class RecordService : CoreService() {
 
     /*停止录制*/
     private fun stopRecord() {
+        ILog.d(TAG, "stopRecord")
         if (wakeLock?.isHeld == true) {
             wakeLock?.release()
             wakeLock = null
         }
         muxer.stop()
         mediaProjection?.unregisterCallback(callback)
-        mediaProjection = null
     }
 }

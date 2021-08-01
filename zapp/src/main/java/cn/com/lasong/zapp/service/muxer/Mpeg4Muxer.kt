@@ -114,7 +114,6 @@ class Mpeg4Muxer {
                 muxerFlag = muxerFlag and FLAG_AUDIO.inv()
             }
             if (isStart(FLAG_VIDEO)) {
-                videoCapture?.unInitEgl()
                 videoCapture?.stop()
                 muxerFlag = muxerFlag and FLAG_VIDEO.inv()
             }
