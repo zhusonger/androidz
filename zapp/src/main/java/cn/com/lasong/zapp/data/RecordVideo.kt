@@ -12,7 +12,7 @@ data class RecordVideo(
     var _height: Int = 0,
     var bitrate: Int = 0,
     var dpi: Int = 1,
-    var matrix: FloatArray = FloatArray(16)
+    var matrix: FloatArray = FloatArray(16) // 投影矩阵
 ) : Parcelable {
     // 根据方向来矫正宽高
     fun coerceDirection(direction: Int) {
@@ -31,16 +31,24 @@ data class RecordVideo(
     // 调整宽高跟手机分辨率比例靠近
     fun alignToMobileRatio() {
         if (_width >= _height) {
-            _width = (_height * MOBILE_RATIO).toInt()
+            _width = (_height * MOBILE_RATIO + 0.5f).toInt()
         } else {
-            _height = (_width * MOBILE_RATIO).toInt()
+            _height = (_width * MOBILE_RATIO + 0.5f).toInt()
         }
     }
 
     // 获取真实画面与实际显示画面的投影矩阵
-    fun updateMatrix(clipMode: Int) {
-        val actualRatio = actualWidth.toFloat() / actualHeight
-        val renderRatio = renderWidth.toFloat() / renderHeight
+    fun updateMatrix(clipMode: Int, swapWH: Boolean = false) {
+        val actualRatio = if (swapWH) {
+            actualHeight.toFloat() / actualWidth
+        } else {
+            actualWidth.toFloat() / actualHeight
+        }
+        val renderRatio = if (swapWH) {
+            renderHeight.toFloat() / renderWidth
+        } else {
+            renderWidth.toFloat() / renderHeight
+        }
         // 举例
         // 横屏
         // actualRatio 1: 1280/960=16/12=1.333
@@ -55,37 +63,54 @@ data class RecordVideo(
         var right = 1f
         var bottom = -1f
         var top = 1f
-        // FILL
-        // 1. AR <= RR 实际比渲染小
-        // 说明[宽]相同的情况下, 高度:渲染<实际,
-        // 所以在FILL模式, 实际的高度缩小到渲染高度, 保持比例的情况下
-        // 实际宽度也缩小到渲染范围内, 以高度为基准, 宽度调整, 如下
-        //  ------------         --------
-        // |  |||||||   |       |  ||||| |
-        // |  |||||||   |       |  ||||| |
-        //  ------------        |  ||||| |
-        //                      |  ||||| |
-        //                       ---------
-        if (actualRatio <= renderRatio) {
-            // top&bottom不变, 调整left&right
-            left = -(actualRatio / renderRatio)
-            right = actualRatio / renderRatio
-        }
-        // 2. AR > RR
-        // 说明[高]相同的情况下, 宽度:实际>渲染
-        // 在FILL模式, 实际的宽度缩小大渲染宽度, 保持比例的情况下
-        // 实际的宽度缩小到渲染范围内, 以宽度为基准, 高度调整, 如下
-        //  ------------         --------
-        // |            |       |        |
-        // ||||||||||||||       ||||||||||
-        // ||||||||||||||       ||||||||||
-        // |            |       ||||||||||
-        //  ------------        |        |
-        //                       --------
-        else {
-            // left&right不变, 调整top&bottom
-            bottom = -(renderRatio / actualRatio)
-            top = renderRatio / actualRatio
+        if (clipMode == CLIP_FILL) {
+            // FILL 居中完整显示, 其余空间填充
+            // 所以这里要调整视口变大, 容纳完整画面
+            // 1. AR <= RR 实际比渲染小
+            // 说明[宽]相同的情况下, 高度:渲染<实际,
+            // 所以在FILL模式, 实际的高度缩小到渲染高度, 保持比例的情况下
+            // 实际宽度也缩小到渲染范围内, 以高度为基准, 宽度调整, 如下
+            //  ------------         --------
+            // |  |||||||   |       |  ||||| |
+            // |  |||||||   |       |  ||||| |
+            //  ------------        |  ||||| |
+            //                      |  ||||| |
+            //                       ---------
+            if (actualRatio <= renderRatio) {
+                // top&bottom不变, 调整left&right
+                left = -(renderRatio / actualRatio)
+                right = renderRatio / actualRatio
+            }
+            // 2. AR > RR
+            // 说明[高]相同的情况下, 宽度:实际>渲染
+            // 在FILL模式, 实际的宽度缩小大渲染宽度, 保持比例的情况下
+            // 实际的宽度缩小到渲染范围内, 以宽度为基准, 高度调整, 如下
+            //  ------------         --------
+            // |            |       |        |
+            // ||||||||||||||       ||||||||||
+            // ||||||||||||||       ||||||||||
+            // |            |       ||||||||||
+            //  ------------        |        |
+            //                       --------
+            else {
+                // left&right不变, 调整top&bottom
+                bottom = -(actualRatio / renderRatio)
+                top = actualRatio / renderRatio
+            }
+        } else if (clipMode == CLIP_CENTER) {
+            // CENTER 居中裁剪显示, 小边撑满
+            // 所以这里要调整视口变小, 进行裁剪
+            if (actualRatio <= renderRatio) {
+                // top&bottom不变, 调整left&right
+                left = -(actualRatio / renderRatio)
+                right = actualRatio / renderRatio
+            }
+            // 2. AR > RR
+            else {
+                // left&right不变, 调整top&bottom
+                bottom = -(renderRatio / actualRatio)
+                top = renderRatio / actualRatio
+            }
         }
         Matrix.orthoM(matrix, 0, left, right, bottom, top, 1f, 3f)
     }

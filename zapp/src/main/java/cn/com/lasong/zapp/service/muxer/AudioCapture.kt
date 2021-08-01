@@ -35,12 +35,13 @@ class AudioCapture(scope: CoroutineScope) {
     }
 
     fun stop() {
+        state = Mpeg4Muxer.STATE_STOP
         try {
             audioEncoder.stop()
             audioEncoder.release()
         } catch (e: Exception) {
             ILog.e(RecordService.TAG, e)
         }
-        state = Mpeg4Muxer.STATE_STOP
+        state = Mpeg4Muxer.STATE_IDLE
     }
 }

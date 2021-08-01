@@ -128,8 +128,6 @@ class Mpeg4Muxer {
                     TN.show(R.string.muxer_stop_fail)
                 }
             }
-            audioCapture?.state = STATE_IDLE
-            videoCapture?.state = STATE_IDLE
             startPtsNs = 0
         }
     }

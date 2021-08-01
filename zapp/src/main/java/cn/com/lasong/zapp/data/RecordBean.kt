@@ -108,7 +108,7 @@ data class RecordBean(
     val videoResolutionDisplay : String
         get() {
             val resolution = allResolution[videoResolution]
-            return when(resolution.renderHeight) {
+            return when(resolution.index) {
                 0 -> {
                     applicationContext().getString(R.string.record_video_resolution_default)
                 } else -> {

@@ -17,6 +17,7 @@ import cn.com.lasong.media.gles.MEGLHelper
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp
+import cn.com.lasong.zapp.data.CLIP_FILL
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.RecordVideo
 import cn.com.lasong.zapp.service.RecordService
@@ -29,6 +30,7 @@ import java.nio.IntBuffer
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
+import kotlin.math.abs
 
 
 /**
@@ -42,7 +44,7 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
 
     companion object {
         const val DISPLAY_NAME = "VideoCapture"
-        const val MAX_SIZE = 1280
+        const val CAPTURE_DELAY = 500L
     }
 
     // 指定线程调度器
@@ -68,6 +70,7 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
 
     // 当前编码宽高
     lateinit var video: RecordVideo
+    private var clipMode: Int = CLIP_FILL
 
     // 屏幕数据纹理
     private var screenTexture = 0
@@ -97,6 +100,9 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
     private var frameProcessAvgMs = 0L
     // 补帧协程任务
     private var fillFrameJob: Job? = null
+    // 截图
+    private var captureBlock: ((String?)->Unit)? = null
+    private var captureDelay = CAPTURE_DELAY
 
     /**
      * 开始在指定线程捕获视频
@@ -105,6 +111,7 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
         val videoResolution = params.videoResolutionValue
         screenshotDir = params.screenshotDir!!
         video = videoResolution.copy()
+        clipMode = params.clipMode
         minSpanPtsNs = 1000_000_000L / params.videoFpsValue
         val renderWidth = videoResolution.renderWidth
         val renderHeight = videoResolution.renderHeight
@@ -356,33 +363,49 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
     /**
      * 执行一帧的渲染与编码
      */
-    private suspend fun doFrame(update: Boolean = true) : Boolean{
+    private suspend fun doFrame(update: Boolean = true, delayFrame:Boolean = true) : Boolean{
         // 间隔时间小于单帧时间间隔, 丢弃这帧
         val ptsNs = Mpeg4Muxer.elapsedPtsNs
         val spanTimeNs = System.nanoTime() - lastRenderPtsNs
         // 丢帧处理
-        if ((ptsNs > 0) and (spanTimeNs < minSpanPtsNs)) {
+        if (delayFrame && (ptsNs > 0) && (spanTimeNs < minSpanPtsNs)) {
             // 延迟剩余的时间
             val delayMs = (minSpanPtsNs - spanTimeNs) / 1000_000
             delay((delayMs - frameProcessAvgMs).coerceAtLeast(0))
         }
         lastRenderPtsNs = System.nanoTime()
         ILog.d(RecordService.TAG, "doFrame 1: EGL")
+
         // 1. 渲染屏幕数据
         val ret = withContext(videoDispatcher) {
             if (!isTextureActive()) {
                 return@withContext false
             }
+            var timestamp = 0L
             // 1. 获取屏幕数据到oes纹理
             if (update) {
                 ILog.d(RecordService.TAG, "doFrame 1.1: updateTexImage")
                 surfaceTexture.updateTexImage()
                 surfaceTexture.getTransformMatrix(oesMatrix) // 纹理矩阵, 一般是校正坐标系统导致的旋转矩阵
+                timestamp = surfaceTexture.timestamp
             }
             ILog.d(RecordService.TAG, "doFrame 1.2: doRender")
             // 2. gles绘制->更新时间戳->交换缓冲到编码器surface
             render.doRender(screenTexture, oesMatrix)
             eglHelper.swapBuffer(ptsNs)
+
+            // 2.1 截图
+            val capture = captureBlock != null && update && timestamp > 0
+            if (capture) {
+                val block = captureBlock
+                captureBlock = null
+                withContext(Dispatchers.Main) {
+                    delay(captureDelay)
+                    val capturePath = doCapture()
+                    block?.invoke(capturePath)
+                }
+            }
+
             return@withContext true
         }
         val processEnd = System.nanoTime()
@@ -442,7 +465,7 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
      * @param target 目标屏幕的方向
      * @param current 当前屏幕的方向
      */
-    fun rotate(target: Int, current: Int) {
+    fun rotate(target: Int, current: Int): Job {
         // 暂停屏幕数据输出
         virtualDisplay?.surface = null
         val width: Int
@@ -461,7 +484,11 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
                 height = video.actualWidth.coerceAtMost(video.actualHeight)
             }
         }
-        scope.launch(videoDispatcher) {
+        // 更新投影矩阵, 横竖评变化需要更换宽高比例
+        video.updateMatrix(clipMode, abs(target - current).mod(2) != 0)
+        render.updateProjection(video.matrix)
+
+        return scope.launch(videoDispatcher) {
             // !! 这里需要重新创建surface, 原来的surface宽高已经固定
             // 否则virtualDisplay渲染到surface不正确
             surfaceTexture.release()
@@ -472,7 +499,6 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
             surfaceTexture.setOnFrameAvailableListener(this@VideoCapture)
             displaySurface = Surface(surfaceTexture)
 
-            surfaceTexture.setDefaultBufferSize(width, height)
             virtualDisplay?.resize(width, height, dpi)
             ILog.d(RecordService.TAG, "rotate $width x $height")
             // 更新旋转矩阵, 把新的屏幕方向转回到开始录制时的方向
@@ -483,17 +509,23 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
     }
 
     /**
+     * 截图
+     */
+    fun capture(block: (String?)->Unit, delay: Long = CAPTURE_DELAY) {
+        captureBlock = block
+        captureDelay = delay
+        ILog.d(RecordService.TAG, "capture : ${System.nanoTime()}")
+    }
+
+    /**
      * 截图返回截图路径
      */
-    suspend fun capture() : String? {
-        var renderWidth = video.renderWidth
-        var renderHeight = video.renderHeight
-        val maxSide = renderWidth.coerceAtLeast(renderHeight)
-        if (maxSide > MAX_SIZE) { // 最大边超出最大范围, 缩小
-            val ratio = MAX_SIZE / maxSide
-            renderWidth *= ratio
-            renderHeight *= ratio
+    private suspend fun doCapture() : String? {
+        if (state != Mpeg4Muxer.STATE_RUNNING) {
+            return null
         }
+        val renderWidth = video.renderWidth
+        val renderHeight = video.renderHeight
         val capacity: Int = renderWidth * renderHeight
         val buffer: IntBuffer = IntBuffer.allocate(capacity)
         withContext(videoDispatcher) {

@@ -205,6 +205,14 @@ class VideoRender(glVersion: Int = 3) {
     }
 
     /**
+     * 更新投影矩阵
+     */
+    fun updateProjection(matrix: FloatArray) {
+        System.arraycopy(matrix, 0, projectionMatrix, 0, matrix.size)
+        isMatrix = true
+    }
+
+    /**
      * 更新水印和宽高
      * @param waterTexture 水印纹理
      * @param watermark 水印图片

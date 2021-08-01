@@ -75,6 +75,8 @@ class RecordService : CoreService() {
         override fun onStop() {
             super.onStop()
             stopRecord()
+            mediaProjection = null
+            mediaData = null
         }
     }
     // onConfigurationChanged 2个横屏状态互相转换的时候不会回调, 监听系统广播
@@ -101,6 +103,9 @@ class RecordService : CoreService() {
         /*销毁时取消协程域*/
         muxer.cancel()
         scope.cancel()
+        mediaProjection?.stop()
+        mediaProjection = null
+        mediaData = null
     }
 
     override fun handleMessage(msg: Message): Boolean {
