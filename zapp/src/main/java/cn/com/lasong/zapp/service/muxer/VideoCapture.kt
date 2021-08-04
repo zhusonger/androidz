@@ -108,6 +108,10 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
      * 开始在指定线程捕获视频
      */
     fun start(params: RecordBean, projection: MediaProjection? = null) {
+        if (state != Mpeg4Muxer.STATE_IDLE) {
+            return
+        }
+        state = Mpeg4Muxer.STATE_READY
         val videoResolution = params.videoResolutionValue
         screenshotDir = params.screenshotDir!!
         video = videoResolution.copy()
@@ -148,32 +152,37 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
         }
 
         videoEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
-        var isConfig = false
+        var configure = false
         try {
             videoEncoder.configure(format,null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            isConfig = true
+            configure = true
         } catch (e: Exception) {
             format.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
             ILog.d(RecordService.TAG, "Change To BITRATE_MODE_CBR")
         }
 
-        if (!isConfig) {
+        if (!configure) {
             try {
                 videoEncoder.configure(format,null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-                isConfig = true
+                configure = true
             } catch (e: Exception) {
                 format.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR)
                 ILog.d(RecordService.TAG, "Change To BITRATE_MODE_VBR")
             }
         }
 
-        if (!isConfig) {
-            try {
+
+        if (!configure) {
+            configure = runCatching {
                 videoEncoder.configure(format,null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            } catch (e: Exception) {
-                ILog.e(e)
-                return
-            }
+                return@runCatching true
+            }.getOrDefault(false)
+        }
+
+        if (!configure) {
+            ILog.e(RecordService.TAG, "Video configure Fail")
+            state = Mpeg4Muxer.STATE_IDLE
+            return
         }
         codecSurface = videoEncoder.createInputSurface()
         videoEncoder.start()
@@ -192,6 +201,9 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
      * 销毁EGL环境
      */
     suspend fun stop() {
+        if (state == Mpeg4Muxer.STATE_STOP || state == Mpeg4Muxer.STATE_IDLE) {
+            return
+        }
         state = Mpeg4Muxer.STATE_STOP
         ILog.d(RecordService.TAG, "VideoCapture stop EGL")
         withContext(videoDispatcher) {

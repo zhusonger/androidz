@@ -17,6 +17,8 @@ import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import java.io.File
 import java.util.*
+import cn.com.lasong.media.record.audio.AudioRecorder
+
 
 /**
  * Author: zhusong
@@ -200,6 +202,16 @@ data class RecordBean(
                 1 -> 2
                 else -> 1
             }
+        }
+
+    val audioBufferSize: Int
+        get() {
+            return AudioRecorder.getBufferSize(audioSampleRateValue, audioChannelValue);
+        }
+
+    val audioSpanTimeUs: Long
+        get() {
+            return audioBufferSize * 1000_000L / audioSampleRateValue
         }
 
     val delayDisplay : String

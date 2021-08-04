@@ -29,9 +29,10 @@ class Mpeg4Muxer {
         const val FLAG_VIDEO = 2
 
         const val STATE_IDLE = 0
-        const val STATE_START = 1
-        const val STATE_RUNNING = 2
-        const val STATE_STOP = 3
+        const val STATE_READY = 1
+        const val STATE_START = 2
+        const val STATE_RUNNING = 3
+        const val STATE_STOP = 4
 
         // 开始&经过的时间
         var startPtsNs = 0L
