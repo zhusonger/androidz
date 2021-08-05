@@ -35,11 +35,16 @@ class AudioCapture(private val scope: CoroutineScope) {
     private var spanTimeUs = 0L
     private var ptsUs = 0L
     private var frameJob: Job? = null
+
+    var callback: ICaptureCallback? = null
+
+
     /**
      * 开启录音以及编码器
      */
     fun start(params: RecordBean) {
         if (state != Mpeg4Muxer.STATE_IDLE) {
+            ILog.d(RecordService.TAG, "Audio Start : $state")
             return
         }
         state = Mpeg4Muxer.STATE_READY
@@ -89,6 +94,7 @@ class AudioCapture(private val scope: CoroutineScope) {
      */
     suspend fun stop() {
         if (state == Mpeg4Muxer.STATE_STOP || state == Mpeg4Muxer.STATE_IDLE) {
+            ILog.d(RecordService.TAG, "Audio Start : $state")
             return
         }
         state = Mpeg4Muxer.STATE_STOP
@@ -145,6 +151,7 @@ class AudioCapture(private val scope: CoroutineScope) {
         if (bufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
             val format: MediaFormat = audioEncoder.outputFormat
             ILog.d(RecordService.TAG, "Audio format : $format")
+            callback?.onMediaFormat(Mpeg4Muxer.FLAG_AUDIO, format)
         } else if (bufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
             ILog.d(RecordService.TAG, "Audio INFO_TRY_AGAIN_LATER")
             // 等待结束标志读取结束
@@ -160,11 +167,12 @@ class AudioCapture(private val scope: CoroutineScope) {
                 data.position(info.offset)
                 data.limit(info.offset + info.size)
                 info.offset = 0
+
+                callback?.onOutputBuffer(Mpeg4Muxer.FLAG_AUDIO, data, info)
             }
             val encoderPtsNs = info.presentationTimeUs * 1000
             ILog.d(RecordService.TAG, "Audio getOutputBuffer $bufferIndex : len = ${data?.limit()}," +
                     " encoderPtsNs = $encoderPtsNs")
-
             audioEncoder.releaseOutputBuffer(bufferIndex, false)
             if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
                 ILog.d(RecordService.TAG, "Audio BUFFER_FLAG_END_OF_STREAM")

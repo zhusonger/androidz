@@ -104,11 +104,14 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
     private var captureBlock: ((String?)->Unit)? = null
     private var captureDelay = CAPTURE_DELAY
 
+    var callback: ICaptureCallback? = null
+
     /**
      * 开始在指定线程捕获视频
      */
     fun start(params: RecordBean, projection: MediaProjection? = null) {
         if (state != Mpeg4Muxer.STATE_IDLE) {
+            ILog.d(RecordService.TAG, "Video Start : $state")
             return
         }
         state = Mpeg4Muxer.STATE_READY
@@ -202,6 +205,7 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
      */
     suspend fun stop() {
         if (state == Mpeg4Muxer.STATE_STOP || state == Mpeg4Muxer.STATE_IDLE) {
+            ILog.d(RecordService.TAG, "Video Stop : $state")
             return
         }
         state = Mpeg4Muxer.STATE_STOP
@@ -444,6 +448,7 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
         if (bufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
             val format: MediaFormat = videoEncoder.outputFormat
             ILog.d(RecordService.TAG, "Video format : $format")
+            callback?.onMediaFormat(Mpeg4Muxer.FLAG_VIDEO, format)
         } else if (bufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
             ILog.d(RecordService.TAG, "Video INFO_TRY_AGAIN_LATER")
             // 等待结束标志读取结束
@@ -459,11 +464,11 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
                 data.position(info.offset)
                 data.limit(info.offset + info.size)
                 info.offset = 0
+                callback?.onOutputBuffer(Mpeg4Muxer.FLAG_VIDEO, data, info)
             }
             val encoderPtsNs = info.presentationTimeUs * 1000
             ILog.d(RecordService.TAG, "Video getOutputBuffer $bufferIndex : len = ${data?.limit()}," +
                     " encoderPtsNs = $encoderPtsNs")
-
             videoEncoder.releaseOutputBuffer(bufferIndex, false)
             if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
                 ILog.d(RecordService.TAG, "Video BUFFER_FLAG_END_OF_STREAM")

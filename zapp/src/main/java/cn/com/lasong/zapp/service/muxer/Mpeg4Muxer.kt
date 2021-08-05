@@ -1,5 +1,7 @@
 package cn.com.lasong.zapp.service.muxer
 
+import android.media.MediaCodec
+import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.media.projection.MediaProjection
 import android.view.Surface
@@ -11,8 +13,11 @@ import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.service.RecordService
 import kotlinx.coroutines.*
 import java.io.File
+import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.LinkedBlockingQueue
+
 
 /**
  * Author: zhusong
@@ -21,7 +26,7 @@ import java.util.*
  * Description:
  * MP4合成
  */
-class Mpeg4Muxer {
+class Mpeg4Muxer : ICaptureCallback {
 
     companion object {
         const val FLAG_IDLE = 0
@@ -36,7 +41,7 @@ class Mpeg4Muxer {
 
         // 开始&经过的时间
         var startPtsNs = 0L
-        var elapsedPtsNs = 0L
+        val elapsedPtsNs: Long
             get() {
                 val now = System.nanoTime()
                 if (startPtsNs <= 0) {
@@ -63,12 +68,17 @@ class Mpeg4Muxer {
 
     // 合成
     private var muxerFlag = FLAG_IDLE
+    private var muxerTarget = FLAG_IDLE
+    private var state = STATE_IDLE
 
     // 当前屏幕的旋转方向
     private var currentRotation = Surface.ROTATION_0
 
+    // 合成器未就绪前丢失的buffer
+    private val lostBuffers: Queue<Triple<Int, ByteBuffer, MediaCodec.BufferInfo>> = LinkedBlockingQueue()
+
     /*判断音频/视频是否启动*/
-    fun isStart(flag: Int) : Boolean {
+    private fun isStart(flag: Int) : Boolean {
         return (muxerFlag and flag) == flag
     }
 
@@ -76,11 +86,12 @@ class Mpeg4Muxer {
      * 开始录制并合成MP4文件
      */
     fun start(params: RecordBean, projection: MediaProjection?) {
-        if (isStart(FLAG_VIDEO) || isStart(FLAG_AUDIO)) {
-            ILog.d(RecordService.TAG, "is Start video : ${isStart(FLAG_VIDEO)}," +
-                    " audio : ${isStart(FLAG_AUDIO)}")
+        if (state != STATE_IDLE) {
+            ILog.d(RecordService.TAG, "State is $state, Video : ${isStart(FLAG_VIDEO)}," +
+                    " Audio : ${isStart(FLAG_AUDIO)}")
             return
         }
+        state = STATE_READY
         this.params = params
         currentRotation = params.rotation
         val simpleDateFormat = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
@@ -93,15 +104,17 @@ class Mpeg4Muxer {
         // 音频
         if (params.audioEnable) {
             audioCapture = AudioCapture(scope)
+            audioCapture?.callback = this
             audioCapture?.start(params)
-            muxerFlag = muxerFlag or FLAG_AUDIO
+            muxerTarget = muxerTarget or FLAG_AUDIO
         }
 
         // 视频
         if (params.videoEnable) {
             videoCapture = VideoCapture(scope)
+            videoCapture?.callback = this
             videoCapture?.start(params, projection!!)
-            muxerFlag = muxerFlag or FLAG_VIDEO
+            muxerTarget = muxerTarget or FLAG_VIDEO
         }
     }
 
@@ -109,20 +122,27 @@ class Mpeg4Muxer {
      * 停止录制
      */
     fun stop() {
+        if (state == STATE_STOP || state == STATE_IDLE) {
+            return
+        }
+        state = STATE_STOP
         scope.launch {
             if (isStart(FLAG_AUDIO)) {
                 audioCapture?.stop()
+                muxerTarget = muxerTarget and FLAG_AUDIO.inv()
                 muxerFlag = muxerFlag and FLAG_AUDIO.inv()
             }
             if (isStart(FLAG_VIDEO)) {
                 videoCapture?.stop()
+                muxerTarget = muxerTarget and FLAG_VIDEO.inv()
                 muxerFlag = muxerFlag and FLAG_VIDEO.inv()
             }
             // 等待音视频结束再停止合成
-            try {
+            val result = runCatching {
                 muxer.stop()
                 muxer.release()
-            } catch (e: Exception) {
+            }
+            if (result.isFailure) {
                 val file = File(path)
                 file.delete()
                 withContext(Dispatchers.Main) {
@@ -130,6 +150,8 @@ class Mpeg4Muxer {
                 }
             }
             startPtsNs = 0
+            state = STATE_IDLE
+            ILog.d(RecordService.TAG, "Mpeg4Muxer Done, path $path, muxerFlag = $muxerFlag, muxerTarget = $muxerTarget")
         }
     }
 
@@ -148,6 +170,55 @@ class Mpeg4Muxer {
             currentRotation = rotation
             ILog.d(RecordService.TAG, "change Orientation target : $target, current : $rotation")
             videoCapture?.rotate(target, rotation)
+        }
+    }
+
+    private var audioTrack = 0
+    private var videoTrack = 0
+    override fun onMediaFormat(flag: Int, format: MediaFormat) {
+        when(flag) {
+            FLAG_AUDIO -> {
+                audioTrack = muxer.addTrack(format)
+                muxerFlag = muxerFlag or FLAG_AUDIO
+            }
+            FLAG_VIDEO -> {
+                videoTrack = muxer.addTrack(format)
+                muxerFlag = muxerFlag or FLAG_VIDEO
+            }
+        }
+        if (state == STATE_READY && muxerFlag == muxerTarget) {
+            muxer.start()
+            state = STATE_START
+        }
+    }
+
+    override fun onOutputBuffer(flag: Int, data: ByteBuffer, info: MediaCodec.BufferInfo) {
+        // Media不要这个配置信息
+        if ((info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+            return
+        }
+        if (state == STATE_START) {
+            state = STATE_RUNNING
+        }
+
+        // 没有start的合成器, 无法写入数据
+        if (muxerFlag != muxerTarget) {
+            ILog.d(RecordService.TAG, "Ignore $flag Data, pts : ${info.presentationTimeUs / 1000}ms")
+            lostBuffers.offer(Triple(flag, data, info))
+            return
+        }
+
+        while (lostBuffers.isNotEmpty()) {
+            val buffer = lostBuffers.poll()!!
+            when(buffer.first) {
+                FLAG_AUDIO -> muxer.writeSampleData(buffer.first, buffer.second, buffer.third)
+                FLAG_VIDEO -> muxer.writeSampleData(buffer.first, buffer.second, buffer.third)
+            }
+            ILog.d(RecordService.TAG, "Recover $flag Data, pts : ${buffer.third.presentationTimeUs / 1000}ms")
+        }
+        when(flag) {
+            FLAG_AUDIO -> muxer.writeSampleData(audioTrack, data, info)
+            FLAG_VIDEO -> muxer.writeSampleData(videoTrack, data, info)
         }
     }
 }
