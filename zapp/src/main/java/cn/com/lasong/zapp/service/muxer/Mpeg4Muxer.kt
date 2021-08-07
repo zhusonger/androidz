@@ -39,6 +39,8 @@ class Mpeg4Muxer : ICaptureCallback {
         const val STATE_RUNNING = 3
         const val STATE_STOP = 4
 
+        const val SUFFIX_TMP = ".tmp"
+        const val SUFFIX_MP4 = ".mp4"
         // 开始&经过的时间
         var startPtsNs = 0L
         val elapsedPtsNs: Long
@@ -96,8 +98,8 @@ class Mpeg4Muxer : ICaptureCallback {
         currentRotation = params.rotation
         val simpleDateFormat = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
         val fileName = simpleDateFormat.format(Calendar.getInstance().time)
-        params.fileName = "Screen_$fileName.mp4"
-        val file = File(params.saveDir!!, params.fileName!!)
+        params.fileName = "Screen_$fileName"
+        val file = File(params.saveDir!!, "${params.fileName!!}$SUFFIX_TMP")
         path = file.absolutePath
         muxer = MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
 
@@ -142,11 +144,17 @@ class Mpeg4Muxer : ICaptureCallback {
                 muxer.stop()
                 muxer.release()
             }
+            val file = File(path)
             if (result.isFailure) {
-                val file = File(path)
                 file.delete()
                 withContext(Dispatchers.Main) {
                     TN.show(R.string.muxer_stop_fail)
+                }
+            } else {
+                val dest = File(params.saveDir!!, "${params.fileName!!}$SUFFIX_MP4")
+                val ret = file.renameTo(dest)
+                if (ret) {
+                    path = dest.absolutePath;
                 }
             }
             startPtsNs = 0

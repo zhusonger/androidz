@@ -21,10 +21,8 @@ import cn.com.lasong.zapp.data.DIRECTION_LANDSCAPE
 import cn.com.lasong.zapp.data.DIRECTION_VERTICAL
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.service.muxer.Mpeg4Muxer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
+import java.io.File
 
 
 /**
@@ -94,6 +92,19 @@ class RecordService : CoreService() {
     override fun onCreate() {
         super.onCreate()
         registerReceiver(receiver, IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED))
+        // 启动时删除临时文件
+        scope.launch(Dispatchers.IO) {
+            val bean = RecordBean()
+            val saveDir = File(bean.saveDir!!)
+            val tmpFiles = saveDir.list { _, name ->
+                null != name && name.endsWith(Mpeg4Muxer.SUFFIX_TMP)
+            }
+            tmpFiles?.forEach {
+                val file = File(saveDir, it)
+                file.delete()
+                ILog.d(TAG, "delete tmp file : ${file.absolutePath}")
+            }
+        }
     }
 
     override fun onDestroy() {
