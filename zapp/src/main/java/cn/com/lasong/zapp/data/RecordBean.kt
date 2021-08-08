@@ -55,13 +55,26 @@ data class RecordBean(
         VIDEO_720P, VIDEO_480P, VIDEO_360P)  // 支持的分辨率
 
     init {
-        // save dir
-        saveDir = applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath
-        screenshotDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        var mediaDir: String? = null
+        var screenMediaDir: String? = null
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val mediaDirs = applicationContext().externalMediaDirs
+            if (null != mediaDirs && mediaDirs.isNotEmpty()) {
+                mediaDir = mediaDirs[0].absolutePath
+                screenMediaDir = File(mediaDirs[0], "Screenshots").absolutePath
+            }
+        }
+        // video dir
+        val defaultSaveDir = applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath
+        saveDir = mediaDir ?: defaultSaveDir
+
+        // screenshot dir
+        val defaultScreenshotDir  = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
              applicationContext().getExternalFilesDir(Environment.DIRECTORY_SCREENSHOTS)?.absolutePath
         } else {
             applicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath
         }
+        screenshotDir = screenMediaDir ?: defaultScreenshotDir
     }
 
     var appFreeSize: Long  // free size

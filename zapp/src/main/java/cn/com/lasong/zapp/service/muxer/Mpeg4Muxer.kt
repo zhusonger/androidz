@@ -3,11 +3,13 @@ package cn.com.lasong.zapp.service.muxer
 import android.media.MediaCodec
 import android.media.MediaFormat
 import android.media.MediaMuxer
+import android.media.MediaScannerConnection
 import android.media.projection.MediaProjection
 import android.view.Surface
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.utils.TN
 import cn.com.lasong.zapp.R
+import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 import cn.com.lasong.zapp.data.DIRECTION_AUTO
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.service.RecordService
@@ -154,7 +156,18 @@ class Mpeg4Muxer : ICaptureCallback {
                 val dest = File(params.saveDir!!, "${params.fileName!!}$SUFFIX_MP4")
                 val ret = file.renameTo(dest)
                 if (ret) {
-                    path = dest.absolutePath;
+                    path = dest.absolutePath
+                }
+                // 扫描视频文件到系统媒体库中
+                MediaScannerConnection.scanFile(
+                    applicationContext(),
+                    arrayOf(path),
+                    arrayOf("video/mp4")
+                ) { path, uri ->
+                    ILog.d(RecordService.TAG, "scanFile $path $uri")
+                    // TODO: 2021/8/9
+                    // 1. INSERT LOCAL DATABASE
+                    // 2. Open Video List
                 }
             }
             startPtsNs = 0
