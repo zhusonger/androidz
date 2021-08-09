@@ -1,6 +1,8 @@
 package cn.com.lasong.mux;
 
 import android.Manifest;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
@@ -50,8 +52,13 @@ public class MuxActivity extends AppBaseActivity {
                             if (out.exists()) {
                                 out.delete();
                             }
-                            int ret = muxer.remux(file.getAbsolutePath(), out.getAbsolutePath(), 1, 6.8);
+                            int ret = muxer.remux(file.getAbsolutePath(), out.getAbsolutePath(), 4.8, 0);
                             ILog.d("ret: " + ret);
+                            if (ret == 0) {
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setDataAndType(Uri.parse(out.getAbsolutePath()), "video/mp4");
+                                startActivity(intent);
+                            }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

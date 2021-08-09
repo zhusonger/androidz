@@ -7,10 +7,6 @@ import android.widget.ImageView;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
-import com.hitomi.tilibrary.style.progress.ProgressPieIndicator;
-import com.hitomi.tilibrary.transfer.TransferConfig;
-import com.hitomi.tilibrary.transfer.Transferee;
-import com.vansz.glideimageloader.GlideImageLoader;
 
 import cn.com.lasong.R;
 import cn.com.lasong.app.AppBaseActivity;
@@ -24,13 +20,13 @@ import cn.com.lasong.app.AppBaseActivity;
 public class GalleryActivity extends AppBaseActivity implements View.OnClickListener {
 
     private ImageView mIvIcon;
-    private Transferee transfer;
+//    private Transferee transfer;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
-        transfer = Transferee.getDefault(this);
+//        transfer = Transferee.getDefault(this);
         mIvIcon = findViewById(R.id.iv_icon);
         mIvIcon.setOnClickListener(this);
         // 设置默认图
@@ -40,21 +36,21 @@ public class GalleryActivity extends AppBaseActivity implements View.OnClickList
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        transfer.destroy();
+//        transfer.destroy();
     }
 
     @Override
     public void onClick(View v) {
         if (v == mIvIcon) {
-            TransferConfig config = TransferConfig.build()
-                    .setSourceUrlList(SourceConfig.getThumbSourceGroup())
-                    .setProgressIndicator(new ProgressPieIndicator())
-                    .setImageLoader(GlideImageLoader.with(getApplicationContext()))
-                    .enableHideThumb(false)
-                    .bindImageView(mIvIcon);
-
-            config.setNowThumbnailIndex(0);
-            transfer.apply(config).show();
+//            TransferConfig config = TransferConfig.build()
+//                    .setSourceUrlList(SourceConfig.getThumbSourceGroup())
+//                    .setProgressIndicator(new ProgressPieIndicator())
+//                    .setImageLoader(GlideImageLoader.with(getApplicationContext()))
+//                    .enableHideThumb(false)
+//                    .bindImageView(mIvIcon);
+//
+//            config.setNowThumbnailIndex(0);
+//            transfer.apply(config).show();
         }
     }
 }
