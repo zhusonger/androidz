@@ -9,9 +9,11 @@ import android.view.Surface
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.utils.TN
 import cn.com.lasong.zapp.R
+import cn.com.lasong.zapp.ZApp.Companion.appInstance
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 import cn.com.lasong.zapp.data.DIRECTION_AUTO
 import cn.com.lasong.zapp.data.RecordBean
+import cn.com.lasong.zapp.database.VideoEntity
 import cn.com.lasong.zapp.service.RecordService
 import kotlinx.coroutines.*
 import java.io.File
@@ -165,9 +167,8 @@ class Mpeg4Muxer : ICaptureCallback {
                     arrayOf("video/mp4")
                 ) { path, uri ->
                     ILog.d(RecordService.TAG, "scanFile $path $uri")
-                    // TODO: 2021/8/9
-                    // 1. INSERT LOCAL DATABASE
-                    // 2. Open Video List
+                    val dao = appInstance().database.getVideoDao()
+                    dao.insertVideo(VideoEntity(path, uri.toString()))
                 }
             }
             startPtsNs = 0

@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-parcelize'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -28,6 +29,9 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    packagingOptions {
+        exclude 'META-INF/atomicfu.kotlin_module'
     }
     kotlinOptions {
         jvmTarget = '1.8'
@@ -58,6 +62,16 @@ dependencies {
 
     implementation 'com.tencent:mmkv-static:1.2.9'
     implementation 'com.google.code.gson:gson:2.8.6'
+
+    // Room
+    implementation "androidx.room:room-ktx:2.3.0"
+    kapt "androidx.room:room-compiler:2.3.0"
+
+    // Debugger Tools
+    debugImplementation 'com.facebook.flipper:flipper:0.102.0'
+    debugImplementation 'com.facebook.soloader:soloader:0.10.1'
+    releaseImplementation 'com.facebook.flipper:flipper-noop:0.102.0'
+
     implementation project(":media")
     implementation project(":widget")
     implementation project(":base")
