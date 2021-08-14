@@ -8,6 +8,7 @@ import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.RecordKey
 import cn.com.lasong.zapp.data.RecordState
+import cn.com.lasong.zapp.database.VideoEntity
 import com.tencent.mmkv.MMKV
 import java.util.*
 
@@ -26,6 +27,8 @@ open class MainViewModel : ViewModel() {
     val targetState = MutableLiveData(RecordState.IDLE)
     // 请求系统录屏返回的Intent
     val captureResult = MutableLiveData<Intent?>()
+    // 当前正在录制的视频信息
+    val recordingVideo = MutableLiveData<VideoEntity?>()
 
     val params = MutableLiveData<RecordBean>().apply {
         MMKV.defaultMMKV().let {
@@ -40,6 +43,16 @@ open class MainViewModel : ViewModel() {
 
     // 录制经过的时长 单位s
     val elapsedTimeMs = MutableLiveData(0L)
+
+    // 更新当前状态
+    fun updateCurrent(state: RecordState) {
+        currentState.value = state
+    }
+
+    // 更新目标状态
+    fun updateTarget(state: RecordState) {
+        targetState.value = state
+    }
 
     fun updateFreeSize() {
         val value = params.value
@@ -105,5 +118,13 @@ open class MainViewModel : ViewModel() {
 
     fun stopTimer() {
         timer?.cancel()
+    }
+
+    fun updateCapture(result: Intent) {
+        captureResult.value = result
+    }
+
+    fun updateRecording(result: VideoEntity?) {
+        recordingVideo.value = result
     }
 }

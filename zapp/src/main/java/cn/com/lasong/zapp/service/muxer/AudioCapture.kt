@@ -1,5 +1,6 @@
 package cn.com.lasong.zapp.service.muxer
 
+import android.media.AudioRecord
 import android.media.MediaCodec
 import android.media.MediaFormat
 import android.media.MediaRecorder
@@ -9,7 +10,6 @@ import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.service.RecordService
 import kotlinx.coroutines.*
-import android.media.AudioRecord
 import java.nio.ByteBuffer
 
 
@@ -59,7 +59,7 @@ class AudioCapture(private val scope: CoroutineScope) {
         audioEncoder.start()
 
         frameJob = scope.async(start = CoroutineStart.LAZY) {
-            try {
+            runCatching {
                 while (isActive) {
                     if (state == Mpeg4Muxer.STATE_STOP) {
                         break
@@ -67,8 +67,6 @@ class AudioCapture(private val scope: CoroutineScope) {
                     doFrame()
                     delay(spanTimeUs/1000)
                 }
-            } catch (e: Exception) {
-                ILog.e(RecordService.TAG, e)
             }
         }
         scope.launch {

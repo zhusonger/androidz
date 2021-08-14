@@ -9,11 +9,9 @@ import android.view.Surface
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.utils.TN
 import cn.com.lasong.zapp.R
-import cn.com.lasong.zapp.ZApp.Companion.appInstance
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 import cn.com.lasong.zapp.data.DIRECTION_AUTO
 import cn.com.lasong.zapp.data.RecordBean
-import cn.com.lasong.zapp.database.VideoEntity
 import cn.com.lasong.zapp.service.RecordService
 import kotlinx.coroutines.*
 import java.io.File
@@ -64,7 +62,7 @@ class Mpeg4Muxer : ICaptureCallback {
     private lateinit var muxer: MediaMuxer
 
     // 录制文件路径
-    private lateinit var path: String
+    lateinit var path: String
 
     // 录制参数
     private lateinit var params: RecordBean
@@ -127,7 +125,7 @@ class Mpeg4Muxer : ICaptureCallback {
     /**
      * 停止录制
      */
-    fun stop() {
+    fun stop(block: ((String, String?)->Unit)? = null) {
         if (state == STATE_STOP || state == STATE_IDLE) {
             return
         }
@@ -135,11 +133,13 @@ class Mpeg4Muxer : ICaptureCallback {
         scope.launch {
             if (isStart(FLAG_AUDIO)) {
                 audioCapture?.stop()
+                audioCapture = null
                 muxerTarget = muxerTarget and FLAG_AUDIO.inv()
                 muxerFlag = muxerFlag and FLAG_AUDIO.inv()
             }
             if (isStart(FLAG_VIDEO)) {
                 videoCapture?.stop()
+                videoCapture = null
                 muxerTarget = muxerTarget and FLAG_VIDEO.inv()
                 muxerFlag = muxerFlag and FLAG_VIDEO.inv()
             }
@@ -166,9 +166,7 @@ class Mpeg4Muxer : ICaptureCallback {
                     arrayOf(path),
                     arrayOf("video/mp4")
                 ) { path, uri ->
-                    ILog.d(RecordService.TAG, "scanFile $path $uri")
-                    val dao = appInstance().database.getVideoDao()
-                    dao.insertVideo(VideoEntity(path, uri.toString()))
+                    block?.invoke(path, uri?.toString())
                 }
             }
             startPtsNs = 0
@@ -193,6 +191,16 @@ class Mpeg4Muxer : ICaptureCallback {
             ILog.d(RecordService.TAG, "change Orientation target : $target, current : $rotation")
             videoCapture?.rotate(target, rotation)
         }
+    }
+
+    /**
+     * 截图
+     */
+    fun capture(block: (String?, ByteArray?)->Unit,
+                delay: Long = VideoCapture.CAPTURE_DELAY,
+                isCache: Boolean = false,
+                isBytes: Boolean = false) {
+        videoCapture?.capture(block, delay, isCache, isBytes)
     }
 
     private var audioTrack = 0

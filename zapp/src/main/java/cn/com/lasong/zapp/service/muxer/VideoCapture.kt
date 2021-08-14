@@ -9,6 +9,7 @@ import android.hardware.display.VirtualDisplay
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.media.MediaScannerConnection
 import android.media.projection.MediaProjection
 import android.opengl.GLES20
 import android.os.Build
@@ -17,12 +18,14 @@ import cn.com.lasong.media.gles.MEGLHelper
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp
+import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 import cn.com.lasong.zapp.data.CLIP_FILL
 import cn.com.lasong.zapp.data.RecordBean
 import cn.com.lasong.zapp.data.RecordVideo
 import cn.com.lasong.zapp.service.RecordService
 import cn.com.lasong.zapp.service.muxer.render.VideoRender
 import kotlinx.coroutines.*
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
@@ -30,6 +33,7 @@ import java.nio.IntBuffer
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
 import kotlin.math.abs
 
 
@@ -101,8 +105,7 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
     // 补帧协程任务
     private var fillFrameJob: Job? = null
     // 截图
-    private var captureBlock: ((String?)->Unit)? = null
-    private var captureDelay = CAPTURE_DELAY
+    private val captures : Queue<Pair<(String?, ByteArray?)->Unit, Triple<Long, Boolean, Boolean>>> = LinkedBlockingQueue()
 
     var callback: ICaptureCallback? = null
 
@@ -230,7 +233,7 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
                 ILog.e(RecordService.TAG, e)
             }
         }
-
+        captures.clear()
         ILog.d(RecordService.TAG, "VideoCapture stop MediaCodec Done")
         state = Mpeg4Muxer.STATE_IDLE
     }
@@ -411,17 +414,37 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
             eglHelper.swapBuffer(ptsNs)
 
             // 2.1 截图
-            val capture = captureBlock != null && update && timestamp > 0
-            if (capture) {
-                val block = captureBlock
-                captureBlock = null
+            while (!captures.isEmpty()) {
+                val capture: Pair<(String?, ByteArray?)->Unit, Triple<Long, Boolean, Boolean>> = captures.poll()!!
+                val block = capture.first
+                val delay: Long = capture.second.first
+                val cache = capture.second.second
+                val bytes = capture.second.third
                 withContext(Dispatchers.Main) {
-                    delay(captureDelay)
-                    val capturePath = doCapture()
-                    block?.invoke(capturePath)
+                    delay(delay)
+                    val result = doCapture(isCache = cache, isBytes = bytes)
+                    // 非缓存且无字节, 更新到媒体库
+                    if (!cache && !bytes) {
+                        MediaScannerConnection.scanFile(
+                            applicationContext(),
+                            arrayOf(result as String?),
+                            arrayOf("image/png")
+                        ) { path, _ ->
+                            block(path, null)
+                        }
+                    }
+                    // 字节
+                    else if (bytes) {
+                        val buffer = result as ByteArray?
+                        block(null, buffer)
+                    }
+                    // 非字节且缓存, 直接返回
+                    else {
+                        val path = result as String?
+                        block(path, null)
+                    }
                 }
             }
-
             return@withContext true
         }
         val processEnd = System.nanoTime()
@@ -528,16 +551,17 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
     /**
      * 截图
      */
-    fun capture(block: (String?)->Unit, delay: Long = CAPTURE_DELAY) {
-        captureBlock = block
-        captureDelay = delay
-        ILog.d(RecordService.TAG, "capture : ${System.nanoTime()}")
+    fun capture(block: (String?, ByteArray?)->Unit, delay: Long = CAPTURE_DELAY, isCache: Boolean = false, isBytes: Boolean = false) {
+        runCatching {
+            captures.offer(Pair(block, Triple(delay, isCache, isBytes)))
+            ILog.d(RecordService.TAG, "capture : ${System.nanoTime()}, delay = $delay, isCache = $isCache, isBytes = $isBytes")
+        }
     }
 
     /**
      * 截图返回截图路径
      */
-    private suspend fun doCapture() : String? {
+    private suspend fun doCapture(isCache: Boolean = false, isBytes: Boolean = false) : Any? {
         if (state != Mpeg4Muxer.STATE_RUNNING) {
             return null
         }
@@ -572,7 +596,7 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
                 fixPixels[fixIndex] = fixPixel
             }
         }
-        val path: String? = withContext(Dispatchers.IO) {
+        val result: Any? = withContext(Dispatchers.IO) {
             val bitmap: Bitmap
             try {
                 bitmap = Bitmap.createBitmap(
@@ -587,10 +611,35 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
             }
 
             return@withContext runCatching {
+                if (isBytes) {
+                    val bos = ByteArrayOutputStream()
+                    bitmap?.compress(Bitmap.CompressFormat.PNG, 100, bos)
+                    bos.close()
+                    return@runCatching bos.toByteArray()
+                }
                 val simpleDateFormat =
                     SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
-                val fileName = simpleDateFormat.format(Calendar.getInstance().time)
-                val file = File(this@VideoCapture.screenshotDir, "capture_$fileName.png")
+                val fileName = if (isCache) {
+                    "cache_${simpleDateFormat.format(Calendar.getInstance().time)}.png"
+                } else {
+                    "capture_${simpleDateFormat.format(Calendar.getInstance().time)}.png"
+                }
+                val shotDir = if (isCache) {
+                    File(this@VideoCapture.screenshotDir, ".cache")
+                } else {
+                    File(this@VideoCapture.screenshotDir)
+                }
+                if (!shotDir.exists()) {
+                    shotDir.mkdirs()
+                    if (isCache) {
+                        val noMedia = File(shotDir, ".nomedia")
+                        noMedia.createNewFile()
+                    }
+                }
+                val file = File(shotDir, fileName)
+                if (file.parentFile?.exists() == false) {
+                    file.parentFile?.mkdirs()
+                }
                 val fos = FileOutputStream(file)
                 bitmap?.compress(Bitmap.CompressFormat.PNG, 100, fos)
                 fos.close()
@@ -598,7 +647,7 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
             }.getOrNull()
         }
 
-        ILog.d(RecordService.TAG, "capture path: $path")
-        return path
+        ILog.d(RecordService.TAG, "capture $isBytes result: $result")
+        return result
     }
 }

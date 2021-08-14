@@ -248,26 +248,26 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             .show()
     }
 
-    private fun startRecord() {
+    private fun startRecord(audioGrant: Boolean = false) {
         val state = viewModel.currentState.value!!
         if (state == RecordState.RUNNING || state == RecordState.READY) {
             ConfirmDialog.newInstance(context = requireActivity(),
                 content = getString(R.string.record_confirm_content_recording),
                 listener = { _, which ->
                 if (which == DialogInterface.BUTTON_POSITIVE) {
-                    viewModel.targetState.value = RecordState.STOP
+                    viewModel.updateTarget(RecordState.STOP)
                 }
             }).show()
             return
         }
 
         val params = viewModel.params.value!!
-        if (params.audioEnable) {
+        if (!audioGrant && params.audioEnable) {
             // 先检查是否录音, 录音先请求录音权限
             requestPermissions(
                 { isGrant, _ ->
                     if (isGrant) {
-                        viewModel.targetState.value = RecordState.READY
+                        startRecord(true)
                     } else {
                         // 未授权, 弹出弹窗方便可以再次跳转到权限设置
                         val dialog = AlertDialog.Builder(activity).setTitle(R.string.title_default)
@@ -285,6 +285,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                 Manifest.permission.RECORD_AUDIO)
             return
         }
-        viewModel.targetState.value = RecordState.READY
+
+        viewModel.updateTarget(RecordState.READY)
     }
 }

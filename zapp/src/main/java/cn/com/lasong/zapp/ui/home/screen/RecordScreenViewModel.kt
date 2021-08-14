@@ -1,5 +1,6 @@
 package cn.com.lasong.zapp.ui.home.screen
 
+import androidx.lifecycle.ViewModel
 import cn.com.lasong.zapp.MainViewModel
 
 
@@ -9,4 +10,4 @@ import cn.com.lasong.zapp.MainViewModel
  * Date: 2021/6/8
  * Description:
  */
-class RecordScreenViewModel : MainViewModel()
+class RecordScreenViewModel : ViewModel()

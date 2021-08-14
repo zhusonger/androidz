@@ -18,6 +18,7 @@ import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.base.CoreActivity
 import cn.com.lasong.zapp.base.contract.MediaProjectRequest
 import cn.com.lasong.zapp.data.RecordState
+import cn.com.lasong.zapp.database.VideoEntity
 import cn.com.lasong.zapp.databinding.ActivityMainBinding
 import cn.com.lasong.zapp.databinding.ViewDelayBinding
 import cn.com.lasong.zapp.service.CoreService
@@ -58,7 +59,7 @@ class MainActivity : CoreActivity() {
             when (it) {
                 // 1.1! 查询是否正在录制
                 RecordState.READY -> {
-                    viewModel.currentState.value = RecordState.READY
+                    viewModel.updateCurrent(RecordState.READY)
                     sendMessage(Message.obtain(handler, RecordService.MSG_QUERY_RECORD))
                 }
                 // 1.3! 开始录制
@@ -79,7 +80,7 @@ class MainActivity : CoreActivity() {
                             delay(1000)
                         }
                         windowManager.removeView(binding.root)
-                        viewModel.currentState.value = RecordState.START
+                        viewModel.updateCurrent(RecordState.START)
                         val message = Message.obtain(handler, RecordService.MSG_RECORD_START)
                         val data = viewModel.captureResult.value ?: Intent()
                         data.putExtra(RecordService.KEY_RECORD_PARAMS, viewModel.params.value)
@@ -89,14 +90,14 @@ class MainActivity : CoreActivity() {
                 }
                 // 1.4! 启动完成, 更新UI为运行中
                 RecordState.RUNNING -> {
-                    viewModel.currentState.value = RecordState.RUNNING
+                    viewModel.updateCurrent(RecordState.RUNNING)
                     // 把服务设置成跟activity无关
                     startService(Intent(this, RecordService::class.java))
                 }
                 // 1.5! 停止录制
                 RecordState.STOP -> {
                     delayJob?.cancel()
-                    viewModel.currentState.value = RecordState.STOP
+                    viewModel.updateCurrent(RecordState.STOP)
                     val message = Message.obtain(handler, RecordService.MSG_RECORD_STOP)
                     sendMessage(message)
 
@@ -104,7 +105,7 @@ class MainActivity : CoreActivity() {
                 // 1.6! 默认状态
                 RecordState.IDLE -> {
                     // 在service里已经stop掉了, 不需要再次调用stopService
-                    viewModel.currentState.value = RecordState.IDLE
+                    viewModel.updateCurrent(RecordState.IDLE)
                 }
                 // do nothing
                 else -> {
@@ -115,14 +116,24 @@ class MainActivity : CoreActivity() {
         mCaptureLauncher = registerForActivityResult(MediaProjectRequest()) {
             // 1.2.1.1 没有给权限, 忽略并重置状态
             if (null == it) {
-                viewModel.targetState.value = RecordState.IDLE
-                viewModel.currentState.value = RecordState.IDLE
+                viewModel.updateTarget(RecordState.IDLE)
+                viewModel.updateCurrent(RecordState.IDLE)
                 return@registerForActivityResult
             }
             // 1.2.1.2 更新结果
-            viewModel.captureResult.value = it
-            viewModel.targetState.value = RecordState.START
+            viewModel.updateCapture(it)
+            viewModel.updateTarget(RecordState.START)
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        sendMessage(Message.obtain(handler, RecordService.MSG_QUERY_VIDEO))
+    }
+
+    override fun onStop() {
+        super.onStop()
+        sendMessage(Message.obtain(handler, RecordService.MSG_UPDATE_SCREEN_SHOT))
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -143,7 +154,7 @@ class MainActivity : CoreActivity() {
                 val recording  = map[RecordService.KEY_RECORDING] as Boolean
                 val startTime = map[RecordService.KEY_RECORD_START_TIME] as Long
                 if (recording) {
-                    viewModel.targetState.value = RecordState.RUNNING
+                    viewModel.updateTarget(RecordState.RUNNING)
                     viewModel.startTimer(startTime)
                 }
             }
@@ -159,11 +170,11 @@ class MainActivity : CoreActivity() {
                 }
                 // 1.2.2 如果不在录制且有录制对象, 直接开始录制
                 else if (!recording && mediaDataExist) {
-                    viewModel.targetState.value = RecordState.START
+                    viewModel.updateTarget(RecordState.START)
                 }
                 // 1.2.3 正在录制, 同步下状态即可
                 else if (recording) {
-                    viewModel.targetState.value = RecordState.RUNNING
+                    viewModel.updateTarget(RecordState.RUNNING)
                     viewModel.startTimer(startTime)
                 }
             }
@@ -173,7 +184,7 @@ class MainActivity : CoreActivity() {
                 if (result == CoreService.RES_OK) {
                     val data = msg.data
                     val startTime = data.getLong(RecordService.KEY_RECORD_START_TIME)
-                    viewModel.targetState.value = RecordState.RUNNING
+                    viewModel.updateTarget(RecordState.RUNNING)
                     viewModel.startTimer(startTime)
                     moveTaskToBack(true)
                 }
@@ -182,10 +193,16 @@ class MainActivity : CoreActivity() {
             RecordService.MSG_RECORD_STOP -> {
                 val result = msg.obj as String
                 if (result == CoreService.RES_OK) {
-                    viewModel.targetState.value = RecordState.IDLE
+                    viewModel.updateTarget(RecordState.IDLE)
                     viewModel.stopTimer()
                 }
             }
+            // 查询结果
+            RecordService.MSG_QUERY_VIDEO -> {
+                val result = msg.obj as VideoEntity?
+                viewModel.updateRecording(result)
+            }
+
         }
         return super.handleMessage(msg)
     }
