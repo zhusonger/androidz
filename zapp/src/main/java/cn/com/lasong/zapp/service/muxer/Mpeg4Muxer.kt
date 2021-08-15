@@ -9,9 +9,11 @@ import android.view.Surface
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.utils.TN
 import cn.com.lasong.zapp.R
+import cn.com.lasong.zapp.ZApp
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 import cn.com.lasong.zapp.data.DIRECTION_AUTO
 import cn.com.lasong.zapp.data.RecordBean
+import cn.com.lasong.zapp.database.VideoEntity
 import cn.com.lasong.zapp.service.RecordService
 import kotlinx.coroutines.*
 import java.io.File
@@ -81,6 +83,9 @@ class Mpeg4Muxer : ICaptureCallback {
     // 合成器未就绪前丢失的buffer
     private val lostBuffers: Queue<Triple<Int, ByteBuffer, MediaCodec.BufferInfo>> = LinkedBlockingQueue()
 
+    // 视频对象
+    var video: VideoEntity? = null
+
     /*判断音频/视频是否启动*/
     private fun isStart(flag: Int) : Boolean {
         return (muxerFlag and flag) == flag
@@ -89,7 +94,7 @@ class Mpeg4Muxer : ICaptureCallback {
     /**
      * 开始录制并合成MP4文件
      */
-    fun start(params: RecordBean, projection: MediaProjection?) {
+    fun start(params: RecordBean, direction: Int, projection: MediaProjection?) {
         if (state != STATE_IDLE) {
             ILog.d(RecordService.TAG, "State is $state, Video : ${isStart(FLAG_VIDEO)}," +
                     " Audio : ${isStart(FLAG_AUDIO)}")
@@ -120,12 +125,14 @@ class Mpeg4Muxer : ICaptureCallback {
             videoCapture?.start(params, projection!!)
             muxerTarget = muxerTarget or FLAG_VIDEO
         }
+
+        video = VideoEntity(path = path, direction = direction, createTime = System.currentTimeMillis())
     }
 
     /**
      * 停止录制
      */
-    fun stop(block: ((String, String?)->Unit)? = null) {
+    fun stop(block: ((String, String?, Long)->Unit)? = null) {
         if (state == STATE_STOP || state == STATE_IDLE) {
             return
         }
@@ -160,13 +167,21 @@ class Mpeg4Muxer : ICaptureCallback {
                 if (ret) {
                     path = dest.absolutePath
                 }
+                video?.duration = elapsedPtsNs / 1000_000_000
                 // 扫描视频文件到系统媒体库中
                 MediaScannerConnection.scanFile(
                     applicationContext(),
                     arrayOf(path),
                     arrayOf("video/mp4")
                 ) { path, uri ->
-                    block?.invoke(path, uri?.toString())
+                    video?.path = path
+                    video?.uri = uri.toString()
+                    video?.title = file.name.substringBefore(".")
+                    if (null != video) {
+                        val dao = ZApp.appInstance().database.getVideoDao()
+                        dao.insertVideo(video!!)
+                    }
+                    block?.invoke(path, uri?.toString(), elapsedPtsNs)
                 }
             }
             startPtsNs = 0
@@ -201,6 +216,15 @@ class Mpeg4Muxer : ICaptureCallback {
                 isCache: Boolean = false,
                 isBytes: Boolean = false) {
         videoCapture?.capture(block, delay, isCache, isBytes)
+    }
+
+    /**
+     * 更新录制中的实时截图
+     */
+    fun updateRecordingCapture(delay: Long = 1500) {
+        capture({ _, bytes ->
+            video?.screenshot = bytes
+        }, delay = delay, isBytes = true)
     }
 
     private var audioTrack = 0

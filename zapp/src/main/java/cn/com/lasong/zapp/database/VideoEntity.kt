@@ -12,8 +12,13 @@ import kotlinx.parcelize.Parcelize
 data class VideoEntity(
     @PrimaryKey(autoGenerate = true)
     var id: Int? = null,
-    var path: String,
+    var direction: Int,
+    var path: String,   // 视频路径
     var uri: String? = null,
+    var title: String? = null, // 名称, 默认为系统生成的视频名称
+    var duration: Long = 0, // 时长, s
+    var favorite: Boolean = false, // 喜好
+    var createTime: Long = 0, // 创建的时间戳
     @ColumnInfo(typeAffinity = BLOB)
     var screenshot: ByteArray? = null
 ) : Parcelable {

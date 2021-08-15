@@ -72,20 +72,15 @@ class HomeFragment : BaseFragment() {
                 GlideApp.with(requireContext()).load(screenshot).miniThumb().into(binding.ivScreenShot)
             }
         })
-//        ViewHelper.setClickAlpha(binding.cardRecordCamera)
         binding.cardRecordScreen.setOnClickListener {
             findNavController().also {controller ->
                 controller.navigate(R.id.action_nav_home_to_nav_screen)
             }
         }
-
+//        ViewHelper.setClickAlpha(binding.cardRecordCamera)
 //        binding.cardRecordCamera.setOnClickListener {
 //
 //        }
         return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
     }
 }

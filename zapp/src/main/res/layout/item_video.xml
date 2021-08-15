@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="20dp"
+    android:layout_marginTop="10dp"
+    android:layout_marginRight="20dp"
+    android:layout_marginBottom="15dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:cardCornerRadius="8dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/iv_screen_shot"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintDimensionRatio="2:1"
+            android:background="@android:color/black"
+            />
+
+        <TextView
+            android:id="@+id/tv_create"
+            style="@style/RecordLabelStyle.Content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:textSize="@dimen/caption_text_size"
+            app:layout_constraintLeft_toLeftOf="@id/iv_screen_shot"
+            app:layout_constraintTop_toTopOf="@id/iv_screen_shot"
+            android:textColor="@android:color/white"
+            tools:text="2021-10-1" />
+
+        <TextView
+            android:id="@+id/tv_duration"
+            style="@style/VideoItemCreateTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            app:layout_constraintLeft_toLeftOf="@id/tv_create"
+            app:layout_constraintTop_toBottomOf="@id/tv_create"
+            android:textColor="@android:color/white"
+            tools:text="10:00" />
+
+        <cn.com.lasong.widget.text.ResizeTextView
+            android:id="@+id/tv_title"
+            style="@style/RecordLabelStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="10dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:ellipsize="end"
+            android:gravity="start"
+            android:singleLine="true"
+            android:drawableRight="@drawable/ic_edit"
+            app:drawRightWidth="20dp"
+            app:drawRightHeight="20dp"
+            android:drawablePadding="3dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/iv_screen_shot"
+            tools:text="Title"
+            android:inputType="none"
+            android:imeOptions="actionGo"
+            android:background="@null"
+            tools:ignore="RtlSymmetry" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/toolbar_video_height"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_title">
+
+            <ImageView
+                android:id="@+id/iv_delete"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:padding="10dp"
+                android:src="@drawable/ic_delete"
+                />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/iv_share"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:padding="10dp"
+                android:src="@drawable/ic_share"
+                />
+
+            <ImageView
+                android:id="@+id/iv_clip"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:padding="5dp"
+                android:src="@drawable/ic_clip_video"
+                />
+
+            <ImageView
+                android:id="@+id/iv_favorite"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:padding="5dp"
+                android:src="@drawable/ic_favorite"
+                />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

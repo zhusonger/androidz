@@ -9,6 +9,6 @@ package cn.com.lasong.zapp.utils
  */
 private const val MINI_THUMB_SIZE = 200
 fun GlideRequest<*>.miniThumb(size: Int = MINI_THUMB_SIZE): GlideRequest<*> {
-    return centerCrop()
+    return this.centerCrop()
         .override(size)
 }

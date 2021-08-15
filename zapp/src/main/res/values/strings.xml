@@ -43,4 +43,7 @@
     <string name="record_permission_write_external_not_grant">获取写入文件权限失败, 请先开启文件权限</string>
     <string name="record_permission_dialog_ok">开启</string>
     <string name="muxer_stop_fail">视频生成失败!</string>
+    <string name="video_delete_tip_content">是否删除本地视频文件 %s \n\n 删除后无法恢复！</string>
+    <string name="video_edit_title_hint">请输入标题~</string>
+    <string name="video_edit_title_empty">标题不能为空, 请输入方便记忆的标题~</string>
 </resources>

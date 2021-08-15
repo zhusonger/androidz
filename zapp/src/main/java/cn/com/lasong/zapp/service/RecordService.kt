@@ -16,12 +16,10 @@ import androidx.core.app.NotificationCompat
 import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.MainActivity
 import cn.com.lasong.zapp.R
-import cn.com.lasong.zapp.ZApp.Companion.appInstance
 import cn.com.lasong.zapp.data.DIRECTION_AUTO
 import cn.com.lasong.zapp.data.DIRECTION_LANDSCAPE
 import cn.com.lasong.zapp.data.DIRECTION_VERTICAL
 import cn.com.lasong.zapp.data.RecordBean
-import cn.com.lasong.zapp.database.VideoEntity
 import cn.com.lasong.zapp.service.muxer.Mpeg4Muxer
 import kotlinx.coroutines.*
 import java.io.File
@@ -93,9 +91,6 @@ class RecordService : CoreService() {
 
     // 常亮控制
     private var wakeLock: WakeLock? = null
-
-    // 视频对象
-    private var video: VideoEntity? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -185,7 +180,7 @@ class RecordService : CoreService() {
                 // 发送消息到客户端
                 val message = Message.obtain(handler, MSG_QUERY_VIDEO)
                 val data = Bundle()
-                data.putParcelable(KEY_VIDEO, video)
+                data.putParcelable(KEY_VIDEO, muxer.video)
                 data.putBoolean(KEY_RECORDING, isRecording)
                 message.obj = data
                 sendMessage(message)
@@ -193,9 +188,7 @@ class RecordService : CoreService() {
             MSG_UPDATE_SCREEN_SHOT -> {
                 if (isRecording) {
                     // 更新缩略图
-                    muxer.capture({ _, bytes ->
-                        video?.screenshot = bytes
-                    }, isBytes = true)
+                    muxer.updateRecordingCapture()
                 }
             }
         }
@@ -295,8 +288,9 @@ class RecordService : CoreService() {
         resolution.alignToMobileRatio()
         // 更新投影矩阵
         resolution.updateMatrix(params.clipMode)
-        muxer.start(params, mediaProjection)
-        video = VideoEntity(path = muxer.path)
+        muxer.start(params, direction, mediaProjection)
+        // 开始后1s更新缩略图
+        muxer.updateRecordingCapture()
     }
 
     /*停止录制*/
@@ -306,13 +300,7 @@ class RecordService : CoreService() {
             wakeLock?.release()
             wakeLock = null
         }
-        muxer.stop { path, uri ->
-            video?.path = path
-            video?.uri = uri
-            if (null != video) {
-                val dao = appInstance().database.getVideoDao()
-                dao.insertVideo(video!!)
-            }
+        muxer.stop { _, _, _ ->
             handleMessage(Message.obtain(handler, MSG_QUERY_VIDEO))
         }
         mediaProjection?.unregisterCallback(callback)

@@ -77,14 +77,12 @@ open class CoreService : Service() {
         when (msg.what) {
             MSG_REGISTER_CLIENT -> {
                 mClients.add(msg.replyTo)
-                val replayMsg = Message.obtain(handler)
-                replayMsg.what = MSG_REGISTER_CLIENT
+                val replayMsg = Message.obtain(handler, MSG_REGISTER_CLIENT)
                 replayMsg.obj = RES_OK
                 this.sendMessage(replayMsg)
             }
             MSG_UNREGISTER_CLIENT -> {
-                val replayMsg = Message.obtain(handler)
-                replayMsg.what = MSG_UNREGISTER_CLIENT
+                val replayMsg = Message.obtain(handler, MSG_UNREGISTER_CLIENT)
                 replayMsg.obj = RES_OK
                 this.sendMessage(replayMsg)
                 mClients.remove(msg.replyTo)

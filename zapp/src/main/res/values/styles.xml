@@ -30,4 +30,10 @@
         <item name="android:orientation">horizontal</item>
         <item name="android:gravity">center_vertical</item>
     </style>
+
+    <style name="VideoItemCreateTime">
+        <item name="android:textColor">@color/textSecondaryDark</item>
+        <item name="android:textSize">@dimen/caption_text_size</item>
+        <item name="fontFamily">sans-serif-medium</item>
+    </style>
 </resources>

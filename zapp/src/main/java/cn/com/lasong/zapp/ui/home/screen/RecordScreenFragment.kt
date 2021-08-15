@@ -248,7 +248,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             .show()
     }
 
-    private fun startRecord(audioGrant: Boolean = false) {
+    private fun startRecord(audioGrant: Boolean = false, writeExternal: Boolean = BuildConfig.VERSION_CODE > Build.VERSION_CODES.P) {
         val state = viewModel.currentState.value!!
         if (state == RecordState.RUNNING || state == RecordState.READY) {
             ConfirmDialog.newInstance(context = requireActivity(),
@@ -261,13 +261,37 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             return
         }
 
+        if (!writeExternal) {
+            // 先检查是否录音, 录音先请求录音权限
+            requestPermissions(
+                { isGrant, _ ->
+                    if (isGrant) {
+                        startRecord(audioGrant, true)
+                    } else {
+                        // 未授权, 弹出弹窗方便可以再次跳转到权限设置
+                        val dialog = AlertDialog.Builder(activity).setTitle(R.string.title_default)
+                            .setMessage(R.string.record_permission_write_external_not_grant)
+                            .setPositiveButton(R.string.record_permission_dialog_ok) { _, _ ->
+                                val uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}")
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri)
+                                startActivity(intent)
+                            }
+                            .setNegativeButton(R.string.cancel, null)
+                            .create()
+                        dialog.show()
+                    }
+                },
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            return
+        }
+
         val params = viewModel.params.value!!
         if (!audioGrant && params.audioEnable) {
             // 先检查是否录音, 录音先请求录音权限
             requestPermissions(
                 { isGrant, _ ->
                     if (isGrant) {
-                        startRecord(true)
+                        startRecord(true, writeExternal)
                     } else {
                         // 未授权, 弹出弹窗方便可以再次跳转到权限设置
                         val dialog = AlertDialog.Builder(activity).setTitle(R.string.title_default)
@@ -275,7 +299,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                             .setPositiveButton(R.string.record_permission_dialog_ok) { _, _ ->
                                 val uri = Uri.parse("package:${BuildConfig.APPLICATION_ID}")
                                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri)
-                                startActivity(intent);
+                                startActivity(intent)
                             }
                             .setNegativeButton(R.string.cancel, null)
                             .create()

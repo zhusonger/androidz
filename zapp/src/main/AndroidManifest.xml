@@ -22,7 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Androidz"
         android:hasFragileUserData="true"
-        >
+        tools:ignore="UnusedAttribute">
 
 
         <activity
@@ -30,7 +30,8 @@
             android:label="@string/app_name"
             android:theme="@style/Theme.Androidz.NoActionBar"
             android:screenOrientation="portrait"
-            >
+            android:windowSoftInputMode="stateHidden"
+            tools:ignore="LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
