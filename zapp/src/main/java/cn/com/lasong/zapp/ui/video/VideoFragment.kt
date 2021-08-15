@@ -1,6 +1,8 @@
 package cn.com.lasong.zapp.ui.video
 
 import android.app.AlertDialog
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -65,6 +67,16 @@ class VideoFragment : BaseFragment() {
                                 videoModel.updateTitle(position, text)
                             }
                         }.show()
+                    }
+
+                    R.id.iv_share -> {
+                        val video = videoModel.data[position]
+                        val shareIntent: Intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_STREAM, Uri.parse(video.uri))
+                            type = "video/mp4"
+                        }
+                        startActivity(Intent.createChooser(shareIntent, getText(R.string.video_send_to)))
                     }
                 }
             }) {
