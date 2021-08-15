@@ -199,8 +199,10 @@ class MainActivity : CoreActivity() {
             }
             // 查询结果
             RecordService.MSG_QUERY_VIDEO -> {
-                val result = msg.obj as VideoEntity?
-                viewModel.updateRecording(result)
+                val result = msg.obj as Bundle
+                val video = result.getParcelable<VideoEntity?>(RecordService.KEY_VIDEO)
+                val recording = result.getBoolean(RecordService.KEY_RECORDING)
+                viewModel.updateRecording(video, recording)
             }
 
         }

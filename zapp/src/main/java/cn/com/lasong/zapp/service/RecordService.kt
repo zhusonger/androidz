@@ -48,6 +48,7 @@ class RecordService : CoreService() {
         const val KEY_MEDIA_DATA_EXIST = "media_data_exist"
         const val KEY_RECORD_PARAMS = "record_params"
         const val KEY_RECORD_START_TIME = "record_start_time"
+        const val KEY_VIDEO = "video"
 
         const val CHANNEL_ID = "RECORD_VIDEO_CHANNEL_ID"
 
@@ -183,7 +184,10 @@ class RecordService : CoreService() {
             MSG_QUERY_VIDEO -> {
                 // 发送消息到客户端
                 val message = Message.obtain(handler, MSG_QUERY_VIDEO)
-                message.obj = video
+                val data = Bundle()
+                data.putParcelable(KEY_VIDEO, video)
+                data.putBoolean(KEY_RECORDING, isRecording)
+                message.obj = data
                 sendMessage(message)
             }
             MSG_UPDATE_SCREEN_SHOT -> {
@@ -292,7 +296,7 @@ class RecordService : CoreService() {
         // 更新投影矩阵
         resolution.updateMatrix(params.clipMode)
         muxer.start(params, mediaProjection)
-        video = VideoEntity(muxer.path)
+        video = VideoEntity(path = muxer.path)
     }
 
     /*停止录制*/
@@ -309,7 +313,7 @@ class RecordService : CoreService() {
                 val dao = appInstance().database.getVideoDao()
                 dao.insertVideo(video!!)
             }
-            video = null
+            handleMessage(Message.obtain(handler, MSG_QUERY_VIDEO))
         }
         mediaProjection?.unregisterCallback(callback)
     }

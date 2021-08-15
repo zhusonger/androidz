@@ -29,6 +29,7 @@ open class MainViewModel : ViewModel() {
     val captureResult = MutableLiveData<Intent?>()
     // 当前正在录制的视频信息
     val recordingVideo = MutableLiveData<VideoEntity?>()
+    val recordingState = MutableLiveData<Boolean>()
 
     val params = MutableLiveData<RecordBean>().apply {
         MMKV.defaultMMKV().let {
@@ -124,7 +125,8 @@ open class MainViewModel : ViewModel() {
         captureResult.value = result
     }
 
-    fun updateRecording(result: VideoEntity?) {
-        recordingVideo.value = result
+    fun updateRecording(video: VideoEntity?, recording: Boolean) {
+        recordingVideo.value = video
+        recordingState.value = recording
     }
 }
