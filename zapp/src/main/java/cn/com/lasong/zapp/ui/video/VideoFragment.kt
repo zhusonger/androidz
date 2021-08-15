@@ -14,10 +14,7 @@ import cn.com.lasong.widget.adapterview.adapter.ZRecyclerViewAdapter
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.database.VideoEntity
 import cn.com.lasong.zapp.databinding.FragmentVideoBinding
-import cn.com.lasong.zapp.utils.GlideApp
-import cn.com.lasong.zapp.utils.ZAdapterChanger
-import cn.com.lasong.zapp.utils.formatDuration
-import cn.com.lasong.zapp.utils.formatTime
+import cn.com.lasong.zapp.utils.*
 import java.util.concurrent.TimeUnit
 
 class VideoFragment : BaseFragment() {
@@ -106,7 +103,7 @@ class VideoFragment : BaseFragment() {
 
             override fun bind(holder: AdapterViewHolder?, item: VideoEntity?, position: Int) {
                 val screenshot = item?.screenshot
-                GlideApp.with(requireContext()).load(screenshot).centerCrop()
+                GlideApp.with(requireContext()).load(screenshot).miniThumb(400)
                     .into(holder?.getView(R.id.iv_screen_shot)!!)
                 val createTime = item?.createTime ?: 0
                 val duration = item?.duration ?: 0

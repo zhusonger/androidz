@@ -71,6 +71,7 @@ class MainActivity : CoreActivity() {
                         val binding = ViewDelayBinding.inflate(layoutInflater)
                         windowManager.addView(binding.root, WindowManager.LayoutParams().also { lp->
                             lp.format = PixelFormat.RGBA_8888
+                            lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         })
 
                         val anim = AnimationUtils.loadAnimation(this@MainActivity, R.anim.record_delay_anim)

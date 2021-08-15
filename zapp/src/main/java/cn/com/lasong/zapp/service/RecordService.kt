@@ -25,6 +25,9 @@ import kotlinx.coroutines.*
 import java.io.File
 
 
+
+
+
 /**
  * Author: zhusong
  * Email: song.zhu@lasong.com.cn
@@ -291,6 +294,12 @@ class RecordService : CoreService() {
         muxer.start(params, direction, mediaProjection)
         // 开始后1s更新缩略图
         muxer.updateRecordingCapture()
+        // 有延时就震动提醒
+        if (params.delay > 0) {
+            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            val patter = longArrayOf(0, 300, 100, 100)
+            vibrator.vibrate(patter, -1)
+        }
     }
 
     /*停止录制*/
