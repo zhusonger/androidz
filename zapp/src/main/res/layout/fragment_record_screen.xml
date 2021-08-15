@@ -369,8 +369,8 @@
 
     <cn.com.lasong.widget.RadiusLayout
         android:id="@+id/layout_record"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         app:bgCircle="true"
         app:bgColor="@android:color/darker_gray"
         app:layout_constraintRight_toRightOf="parent"
@@ -383,6 +383,7 @@
             android:layout_height="24dp"
             android:layout_centerInParent="true"
             android:background="@drawable/ic_record"
+            android:layout_margin="15dp"
             />
     </cn.com.lasong.widget.RadiusLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
