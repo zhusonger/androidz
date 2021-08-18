@@ -10,6 +10,7 @@
     <string name="menu_home">首页</string>
     <string name="menu_video">视频</string>
     <string name="menu_gallery">图库</string>
+    <string name="menu_about">关于</string>
     <string name="home_record_screen_title">屏幕录制</string>
     <string name="home_record_screen_subtitle">免Root实现超清录屏\n请注意保护隐私安全</string>
     <string name="home_record_camera_title">相机录制</string>

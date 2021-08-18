@@ -52,7 +52,7 @@ class MainActivity : CoreActivity() {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(setOf(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_video), binding.drawerLayout)
+                R.id.nav_home, R.id.nav_gallery, R.id.nav_video, R.id.nav_about), binding.drawerLayout)
         setupActionBarWithNavController(navController, appBarConfiguration)
         binding.navView.setupWithNavController(navController)
         viewModel.targetState.observe(this, {
