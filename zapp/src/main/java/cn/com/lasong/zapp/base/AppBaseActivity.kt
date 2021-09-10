@@ -1,10 +1,10 @@
 package cn.com.lasong.zapp.base
 
-import android.R
 import android.view.View
 import android.view.ViewGroup
 import cn.com.lasong.base.BaseActivity
 import cn.com.lasong.widget.utils.ViewHelper
+import cn.com.lasong.zapp.R
 
 /**
  * Author: zhusong

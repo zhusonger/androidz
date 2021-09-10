@@ -11,13 +11,13 @@ import android.util.DisplayMetrics
 import android.view.Surface
 import android.view.WindowManager
 import androidx.core.content.getSystemService
+import cn.com.lasong.media.record.audio.AudioRecorder
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.ZApp.Companion.applicationContext
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import java.io.File
 import java.util.*
-import cn.com.lasong.media.record.audio.AudioRecorder
 
 
 /**
@@ -28,7 +28,7 @@ import cn.com.lasong.media.record.audio.AudioRecorder
  */
 @Parcelize
 data class RecordBean(
-    var saveDir: String?, // 视频保存路径
+    var saveDir: String? = null, // 视频保存路径
     var screenshotDir: String? = null, // 截屏图片
     var videoEnable: Boolean = true, // 视频是否可用
     private var _appFreeSize: Long = 0,// video direction
@@ -46,10 +46,6 @@ data class RecordBean(
     var clipMode: Int = CLIP_FILL // 画面
 ) : Parcelable {
 
-    constructor() : this(null)
-
-
-
     @IgnoredOnParcel
     private val allResolution : Array<RecordVideo> = arrayOf(VIDEO_MOBILE, VIDEO_1080P,
         VIDEO_720P, VIDEO_480P, VIDEO_360P)  // 支持的分辨率
@@ -57,24 +53,26 @@ data class RecordBean(
     init {
         var mediaDir: String? = null
         var screenMediaDir: String? = null
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        if (null == saveDir) {
             val mediaDirs = applicationContext().externalMediaDirs
             if (null != mediaDirs && mediaDirs.isNotEmpty()) {
                 mediaDir = mediaDirs[0].absolutePath
                 screenMediaDir = File(mediaDirs[0], "Screenshots").absolutePath
             }
+            // video dir
+            val defaultSaveDir = applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath
+            saveDir = mediaDir ?: defaultSaveDir
         }
-        // video dir
-        val defaultSaveDir = applicationContext().getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath
-        saveDir = mediaDir ?: defaultSaveDir
 
         // screenshot dir
-        val defaultScreenshotDir  = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-             applicationContext().getExternalFilesDir(Environment.DIRECTORY_SCREENSHOTS)?.absolutePath
-        } else {
-            applicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath
+        if (null == screenshotDir) {
+            val defaultScreenshotDir  = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                applicationContext().getExternalFilesDir(Environment.DIRECTORY_SCREENSHOTS)?.absolutePath
+            } else {
+                applicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath
+            }
+            screenshotDir = screenMediaDir ?: defaultScreenshotDir
         }
-        screenshotDir = screenMediaDir ?: defaultScreenshotDir
     }
 
     var appFreeSize: Long  // free size
@@ -217,15 +215,11 @@ data class RecordBean(
             }
         }
 
-    val audioBufferSize: Int
-        get() {
-            return AudioRecorder.getBufferSize(audioSampleRateValue, audioChannelValue);
-        }
-
     val audioSpanTimeUs: Long
-        get() {
-            return audioBufferSize * 1000_000L / audioSampleRateValue
-        }
+        get() = AudioRecorder.getBufferSize(
+            audioSampleRateValue,
+            audioChannelValue
+        ) * 1000_000L / audioSampleRateValue
 
     val delayDisplay : String
         get() {

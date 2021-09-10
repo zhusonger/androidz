@@ -48,4 +48,5 @@
     <string name="video_edit_title_hint">请输入标题~</string>
     <string name="video_edit_title_empty">标题不能为空, 请输入方便记忆的标题~</string>
     <string name="video_send_to">分享视频给</string>
+    <string name="about_version_name">版本号: %s</string>
 </resources>
