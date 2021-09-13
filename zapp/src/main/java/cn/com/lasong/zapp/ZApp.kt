@@ -32,6 +32,8 @@ class ZApp : BaseApplication() {
             private set
 
         const val KEY_RECORD_SAVE: String = "record_save"
+        const val KEY_CLIENT_KEY_SIGNATURE: String = "client_key_signature"
+
         val JSON = Gson()
         fun applicationContext() : Context {
             return INSTANCE.applicationContext

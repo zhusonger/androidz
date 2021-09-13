@@ -18,6 +18,7 @@ import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.base.CoreActivity
 import cn.com.lasong.zapp.base.contract.MediaProjectRequest
 import cn.com.lasong.zapp.data.RecordState
+import cn.com.lasong.zapp.data.remote.NetManager
 import cn.com.lasong.zapp.database.VideoEntity
 import cn.com.lasong.zapp.databinding.ActivityMainBinding
 import cn.com.lasong.zapp.databinding.ViewDelayBinding
@@ -40,6 +41,7 @@ class MainActivity : CoreActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        NetManager.INSTANCE.validateClientKey()
         Intent(this, RecordService::class.java).also { intent->
             bindService(intent, connection, BIND_AUTO_CREATE)
         }
