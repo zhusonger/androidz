@@ -28,13 +28,16 @@ class NetManager private constructor() {
     /**
      * 获取C/S交互密钥
      */
-    fun validateClientKey(result: ((Int)->Unit)? = null) {
+    fun validateClientKey(result: ((Int) -> Unit)? = null) {
         val request = StringRequest("$BASE_URL/crypto/get_key",
             {
                 MMKV.defaultMMKV()?.apply {
                     putString(ZApp.KEY_CLIENT_KEY_SIGNATURE, it).apply()
                 }
-                val ret = ZCrypto.decryptAndValidClient(it)
+
+                val ret = runCatching {
+                    ZCrypto.decryptAndValidClient(it)
+                }.getOrDefault(-1)
                 ILog.d("validateClientKey : $ret")
                 result?.invoke(ret)
             },
@@ -43,7 +46,9 @@ class NetManager private constructor() {
                 MMKV.defaultMMKV()?.let {
                     return@let it.getString(ZApp.KEY_CLIENT_KEY_SIGNATURE, null)
                 }.apply {
-                    val ret = ZCrypto.decryptAndValidClient(this)
+                    val ret = runCatching {
+                        ZCrypto.decryptAndValidClient(this)
+                    }.getOrDefault(-1)
                     ILog.d("validateClientKey : $ret")
                     result?.invoke(ret)
                 }

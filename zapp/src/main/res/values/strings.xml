@@ -1,11 +1,8 @@
 <resources>
     <string name="app_name">Z录</string>
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_header_title">@string/app_name</string>
     <string name="nav_header_subtitle">song.zhu@lasong.com.cn</string>
     <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Settings</string>
 
     <string name="menu_home">首页</string>
     <string name="menu_video">视频</string>
@@ -49,4 +46,6 @@
     <string name="video_edit_title_empty">标题不能为空, 请输入方便记忆的标题~</string>
     <string name="video_send_to">分享视频给</string>
     <string name="about_version_name">版本号: %s</string>
+    <string name="valid_client_fail_content">验证客户端失败\n请安装正规渠道客户端</string>
+    <string name="valid_client_fail_quit">退出</string>
 </resources>

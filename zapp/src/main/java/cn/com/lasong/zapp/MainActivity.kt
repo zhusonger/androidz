@@ -1,5 +1,6 @@
 package cn.com.lasong.zapp
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Bundle
@@ -27,6 +28,7 @@ import cn.com.lasong.zapp.service.RecordService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.system.exitProcess
 
 
 class MainActivity : CoreActivity() {
@@ -41,7 +43,6 @@ class MainActivity : CoreActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        NetManager.INSTANCE.validateClientKey()
         Intent(this, RecordService::class.java).also { intent->
             bindService(intent, connection, BIND_AUTO_CREATE)
         }
@@ -126,6 +127,21 @@ class MainActivity : CoreActivity() {
             // 1.2.1.2 更新结果
             viewModel.updateCapture(it)
             viewModel.updateTarget(RecordState.START)
+        }
+        if (!BuildConfig.DEBUG) {
+            NetManager.INSTANCE.validateClientKey {
+                if (it < 0) {
+                    // 未授权, 弹出弹窗方便可以再次跳转到权限设置
+                    val dialog = AlertDialog.Builder(this).setTitle(R.string.title_default)
+                        .setMessage(R.string.valid_client_fail_content)
+                        .setCancelable(false)
+                        .setPositiveButton(R.string.valid_client_fail_quit) { _, _ ->
+                            exitProcess(0)
+                        }
+                        .create()
+                    dialog.show()
+                }
+            }
         }
     }
 

@@ -377,13 +377,13 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_margin="10dp">
 
-        <CheckedTextView
-            android:id="@+id/tv_record"
+        <ImageView
+            android:id="@+id/iv_record"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_centerInParent="true"
-            android:background="@drawable/ic_record"
             android:layout_margin="15dp"
+            android:src="@drawable/ic_record_idle"
             />
     </cn.com.lasong.widget.RadiusLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
