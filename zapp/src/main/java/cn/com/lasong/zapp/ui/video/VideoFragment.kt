@@ -28,7 +28,7 @@ class VideoFragment : BaseFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         videoModel = ViewModelProvider(this).get(VideoViewModel::class.java)
         binding = FragmentVideoBinding.inflate(layoutInflater, container, false)
         adapter = object : ZRecyclerViewAdapter<VideoEntity>(

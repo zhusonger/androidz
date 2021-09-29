@@ -37,14 +37,26 @@
         android:id="@+id/nav_screen"
         android:name="cn.com.lasong.zapp.ui.home.screen.RecordScreenFragment"
         android:label="@string/home_record_screen_title"
-        tools:layout="@layout/fragment_record_screen" />
-    <navigation android:id="@+id/navigation"
-        app:startDestination="@id/nav_gallery">
-        <fragment
-            android:id="@+id/nav_gallery"
-            android:name="cn.com.lasong.zapp.ui.gallery.GalleryFragment"
-            android:label="@string/menu_gallery"
-            tools:layout="@layout/fragment_gallery" />
-    </navigation>
-
+        tools:layout="@layout/fragment_record_screen" >
+        <action
+            android:id="@+id/action_nav_screen_to_nav_clip_video"
+            app:destination="@id/nav_clip_video"
+            app:enterAnim="@anim/nav_slide_in_right_anim"
+            app:exitAnim="@anim/nav_slide_out_left_anim"
+            app:popEnterAnim="@anim/nav_slide_in_left_anim"
+            app:popExitAnim="@anim/nav_slide_out_right_anim"
+            app:launchSingleTop="true"
+            app:popUpTo="@id/nav_video"
+            />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_gallery"
+        android:name="cn.com.lasong.zapp.ui.gallery.GalleryFragment"
+        android:label="@string/menu_gallery"
+        tools:layout="@layout/fragment_gallery" />
+    <fragment
+        android:id="@+id/nav_clip_video"
+        android:name="cn.com.lasong.zapp.ui.video.ClipVideoFragment"
+        android:label="@string/video_clip_title"
+        tools:layout="@layout/fragment_clip_video" />
 </navigation>

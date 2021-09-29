@@ -254,6 +254,12 @@ class MainActivity : CoreActivity() {
                 val recording = result.getBoolean(RecordService.KEY_RECORDING)
                 viewModel.updateRecording(video, recording)
             }
+            // 录制合成结束
+            RecordService.MSG_MUX_DONE -> {
+                findNavController(R.id.nav_host_fragment).also {controller ->
+                    controller.navigate(R.id.action_nav_screen_to_nav_clip_video, msg.data)
+                }
+            }
 
         }
         return super.handleMessage(msg)

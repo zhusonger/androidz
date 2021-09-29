@@ -30,7 +30,7 @@ class HomeFragment : BaseFragment() {
             inflater: LayoutInflater,
             container: ViewGroup?,
             savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         homeViewModel = ViewModelProvider(this).get(HomeViewModel::class.java)
         homeViewModel.retrieveLastThumbnail()
         val binding = FragmentHomeBinding.inflate(layoutInflater, container, false)

@@ -44,6 +44,7 @@ class RecordService : CoreService() {
         const val MSG_RECORD_STOP = 3
         const val MSG_QUERY_VIDEO = 4
         const val MSG_UPDATE_SCREEN_SHOT = 5
+        const val MSG_MUX_DONE = 6
 
         const val KEY_RECORDING = "recording"
         const val KEY_MEDIA_DATA_EXIST = "media_data_exist"
@@ -309,8 +310,13 @@ class RecordService : CoreService() {
             wakeLock?.release()
             wakeLock = null
         }
-        muxer.stop { _, _, _ ->
+        muxer.stop { _, video ->
             handleMessage(Message.obtain(handler, MSG_QUERY_VIDEO))
+            val message = Message.obtain(handler, MSG_MUX_DONE)
+            val data = Bundle()
+            data.putParcelable(KEY_VIDEO, video)
+            message.data = data
+            sendMessage(message)
         }
         mediaProjection?.unregisterCallback(callback)
     }

@@ -132,7 +132,7 @@ class Mpeg4Muxer : ICaptureCallback {
     /**
      * 停止录制
      */
-    fun stop(block: ((String, String?, Long)->Unit)? = null) {
+    fun stop(block: ((String, VideoEntity?)->Unit)? = null) {
         if (state == STATE_STOP || state == STATE_IDLE) {
             return
         }
@@ -181,7 +181,7 @@ class Mpeg4Muxer : ICaptureCallback {
                         val dao = ZApp.appInstance().database.getVideoDao()
                         dao.insertVideo(video!!)
                     }
-                    block?.invoke(path, uri?.toString(), elapsedPtsNs)
+                    block?.invoke(path, video)
                 }
             }
             startPtsNs = 0

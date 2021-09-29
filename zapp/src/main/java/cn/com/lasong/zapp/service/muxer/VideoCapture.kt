@@ -305,6 +305,8 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
      * 销毁EGL环境
      */
     private suspend fun unInitEgl() {
+        fillFrameJob?.cancel("unInitEgl")
+        fillFrameJob = null
         withContext(Dispatchers.Main) {
             ILog.d(RecordService.TAG, "release virtualDisplay")
             virtualDisplay?.surface = null
@@ -323,8 +325,6 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
             eglHelper.release()
             ILog.d(RecordService.TAG, "release texture done")
         }
-        fillFrameJob?.cancel("unInitEgl")
-        fillFrameJob = null
     }
 
     // frame comes one by one, means the callback will not be invoked
