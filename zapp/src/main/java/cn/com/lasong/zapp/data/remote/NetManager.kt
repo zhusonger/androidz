@@ -47,7 +47,7 @@ class NetManager private constructor() {
                 }
                 val ret = runCatching {
                     ZCrypto.decryptAndValidClient(it)
-                }.getOrDefault(-1)
+                }.getOrDefault(0)
                 coroutine.resume(ret)
             },
             errorListener = {
@@ -57,7 +57,7 @@ class NetManager private constructor() {
                 }.apply {
                     val ret = runCatching {
                         ZCrypto.decryptAndValidClient(this)
-                    }.getOrDefault(-1)
+                    }.getOrDefault(0)
                     coroutine.resume(ret)
                 }
             },

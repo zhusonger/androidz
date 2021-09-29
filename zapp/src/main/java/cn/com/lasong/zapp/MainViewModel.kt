@@ -146,12 +146,10 @@ open class MainViewModel : ViewModel() {
     // 验证客户端并检测更新
     fun validate() {
         viewModelScope.launch {
-            if (!BuildConfig.DEBUG) {
-                val ret = NetManager.INSTANCE.validateClientKey()
-                validateClient.value = ret
-                if (ret < 0) {
-                    return@launch
-                }
+            val ret = NetManager.INSTANCE.validateClientKey()
+            validateClient.value = ret
+            if (ret < 0) {
+                return@launch
             }
 
             val versions = runCatching { NetManager.INSTANCE.checkVersions() }.getOrNull()
