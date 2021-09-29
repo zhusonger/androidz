@@ -1,6 +1,5 @@
 package cn.com.lasong.zapp
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Bundle
@@ -8,6 +7,7 @@ import android.os.Message
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import androidx.activity.result.ActivityResultLauncher
+import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
@@ -19,12 +19,12 @@ import cn.com.lasong.utils.ILog
 import cn.com.lasong.zapp.base.CoreActivity
 import cn.com.lasong.zapp.base.contract.MediaProjectRequest
 import cn.com.lasong.zapp.data.RecordState
-import cn.com.lasong.zapp.data.remote.NetManager
 import cn.com.lasong.zapp.database.VideoEntity
 import cn.com.lasong.zapp.databinding.ActivityMainBinding
 import cn.com.lasong.zapp.databinding.ViewDelayBinding
 import cn.com.lasong.zapp.service.CoreService
 import cn.com.lasong.zapp.service.RecordService
+import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -43,7 +43,7 @@ class MainActivity : CoreActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Intent(this, RecordService::class.java).also { intent->
+        Intent(this, RecordService::class.java).also { intent ->
             bindService(intent, connection, BIND_AUTO_CREATE)
         }
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -54,8 +54,11 @@ class MainActivity : CoreActivity() {
         val navController = findNavController(R.id.nav_host_fragment)
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
-        appBarConfiguration = AppBarConfiguration(setOf(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_video, R.id.nav_about), binding.drawerLayout)
+        appBarConfiguration = AppBarConfiguration(
+            setOf(
+                R.id.nav_home, R.id.nav_gallery, R.id.nav_video, R.id.nav_about
+            ), binding.drawerLayout
+        )
         setupActionBarWithNavController(navController, appBarConfiguration)
         binding.navView.setupWithNavController(navController)
         viewModel.targetState.observe(this, {
@@ -72,12 +75,17 @@ class MainActivity : CoreActivity() {
                         val delay = params?.delayValue!!
                         val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
                         val binding = ViewDelayBinding.inflate(layoutInflater)
-                        windowManager.addView(binding.root, WindowManager.LayoutParams().also { lp->
-                            lp.format = PixelFormat.RGBA_8888
-                            lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                        })
+                        windowManager.addView(
+                            binding.root,
+                            WindowManager.LayoutParams().also { lp ->
+                                lp.format = PixelFormat.RGBA_8888
+                                lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                            })
 
-                        val anim = AnimationUtils.loadAnimation(this@MainActivity, R.anim.record_delay_anim)
+                        val anim = AnimationUtils.loadAnimation(
+                            this@MainActivity,
+                            R.anim.record_delay_anim
+                        )
                         for (sec in delay downTo 1) {
                             binding.tvDelay.text = sec.toString()
                             binding.tvDelay.startAnimation(anim)
@@ -117,6 +125,43 @@ class MainActivity : CoreActivity() {
                 }
             }
         })
+        viewModel.validateClient.observe(this, {
+            if (it < 0) {
+                // 未授权, 弹出弹窗方便可以再次跳转到权限设置
+                val dialog = AlertDialog.Builder(this).setTitle(R.string.title_default)
+                    .setMessage(R.string.valid_client_fail_content)
+                    .setCancelable(false)
+                    .setPositiveButton(R.string.valid_client_fail_quit) { _, _ ->
+                        exitProcess(0)
+                    }
+                    .create()
+                dialog.show()
+            }
+        })
+        viewModel.updateLogs.observe(this, {
+            if (it == null) {
+                return@observe
+            }
+            // 更新日志
+            val dialog = AlertDialog.Builder(this)
+                .setTitle(R.string.title_update_version)
+                .setMessage(it.logs)
+                .setCancelable(it.force == 0)
+                .setPositiveButton(R.string.update_version_ok) { _, _ ->
+                    // TODO: 2021/9/29 更新
+                }.apply {
+                    if (it.force == 0) {
+                        setNegativeButton(R.string.update_version_cancel) { _, _ ->
+                            MMKV.defaultMMKV()?.apply {
+                                putLong(ZApp.KEY_UPDATE_TS, System.currentTimeMillis())
+                            }?.apply()
+                        }
+                    }
+                }
+                .setIcon(R.mipmap.ic_launcher)
+                .create()
+            dialog.show()
+        })
         mCaptureLauncher = registerForActivityResult(MediaProjectRequest()) {
             // 1.2.1.1 没有给权限, 忽略并重置状态
             if (null == it) {
@@ -128,21 +173,7 @@ class MainActivity : CoreActivity() {
             viewModel.updateCapture(it)
             viewModel.updateTarget(RecordState.START)
         }
-        if (!BuildConfig.DEBUG) {
-            NetManager.INSTANCE.validateClientKey {
-                if (it < 0) {
-                    // 未授权, 弹出弹窗方便可以再次跳转到权限设置
-                    val dialog = AlertDialog.Builder(this).setTitle(R.string.title_default)
-                        .setMessage(R.string.valid_client_fail_content)
-                        .setCancelable(false)
-                        .setPositiveButton(R.string.valid_client_fail_quit) { _, _ ->
-                            exitProcess(0)
-                        }
-                        .create()
-                    dialog.show()
-                }
-            }
-        }
+        viewModel.validate()
     }
 
     override fun onStart() {
@@ -161,7 +192,7 @@ class MainActivity : CoreActivity() {
     }
 
     override fun handleMessage(msg: Message): Boolean {
-        when(msg.what) {
+        when (msg.what) {
             // 进入时查询当前状态
             CoreService.MSG_REGISTER_CLIENT -> {
                 val message = Message.obtain(handler, RecordService.MSG_QUERY_LAST_RECORD)
@@ -170,7 +201,7 @@ class MainActivity : CoreActivity() {
             // 返回当前状态, 如果正在录制, 就同步下状态
             RecordService.MSG_QUERY_LAST_RECORD -> {
                 val map = msg.obj as Map<*, *>
-                val recording  = map[RecordService.KEY_RECORDING] as Boolean
+                val recording = map[RecordService.KEY_RECORDING] as Boolean
                 val startTime = map[RecordService.KEY_RECORD_START_TIME] as Long
                 if (recording) {
                     viewModel.updateTarget(RecordState.RUNNING)
@@ -180,7 +211,7 @@ class MainActivity : CoreActivity() {
             // 1.2! 查询到当前状态
             RecordService.MSG_QUERY_RECORD -> {
                 val map = msg.obj as Map<*, *>
-                val recording  = map[RecordService.KEY_RECORDING] as Boolean
+                val recording = map[RecordService.KEY_RECORDING] as Boolean
                 val mediaDataExist = map[RecordService.KEY_MEDIA_DATA_EXIST] as Boolean
                 val startTime = map[RecordService.KEY_RECORD_START_TIME] as Long
                 // 1.2.1 如果不在录制且没有录制对象, 请求录制权限
