@@ -61,7 +61,7 @@ class MainActivity : CoreActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         binding.navView.setupWithNavController(navController)
-        viewModel.targetState.observe(this, {
+        viewModel.targetState.observe(this) {
             when (it) {
                 // 1.1! 查询是否正在录制
                 RecordState.READY -> {
@@ -124,8 +124,8 @@ class MainActivity : CoreActivity() {
                     ILog.d("targetState : $it")
                 }
             }
-        })
-        viewModel.validateClient.observe(this, {
+        }
+        viewModel.validateClient.observe(this) {
             if (it < 0) {
                 // 未授权, 弹出弹窗方便可以再次跳转到权限设置
                 val dialog = AlertDialog.Builder(this).setTitle(R.string.title_default)
@@ -137,8 +137,8 @@ class MainActivity : CoreActivity() {
                     .create()
                 dialog.show()
             }
-        })
-        viewModel.updateLogs.observe(this, {
+        }
+        viewModel.updateLogs.observe(this) {
             if (it == null) {
                 return@observe
             }
@@ -161,7 +161,7 @@ class MainActivity : CoreActivity() {
                 .setIcon(R.mipmap.ic_launcher)
                 .create()
             dialog.show()
-        })
+        }
         mCaptureLauncher = registerForActivityResult(MediaProjectRequest()) {
             // 1.2.1.1 没有给权限, 忽略并重置状态
             if (null == it) {

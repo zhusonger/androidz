@@ -50,7 +50,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentRecordScreenBinding.inflate(layoutInflater, container, false)
-        viewModel.params.observe(viewLifecycleOwner, {
+        viewModel.params.observe(viewLifecycleOwner) {
             binding.tvFreeSize.text = it.freeSizeDisplay
             when {
                 it.appFreeSize >= SIZE_MIN_VALUE -> {
@@ -85,7 +85,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             } else {
                 binding.llAudioParams.visibility = View.GONE
             }
-        })
+        }
         binding.llFreeSize.setOnClickListener(this)
         binding.llVideoDirection.setOnClickListener(this)
         binding.llResolution.setOnClickListener(this)
@@ -104,7 +104,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
             viewModel.setAudioEnable(isChecked)
         }
 
-        viewModel.currentState.observe(viewLifecycleOwner, {
+        viewModel.currentState.observe(viewLifecycleOwner) {
             when (it) {
                 RecordState.IDLE -> {
                     binding.layoutRecord.isEnabled = true
@@ -126,7 +126,7 @@ class RecordScreenFragment : BaseFragment(), View.OnClickListener {
                     ILog.d("currentState : $it")
                 }
             }
-        })
+        }
         return binding.root
     }
 

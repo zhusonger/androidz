@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import cn.com.lasong.base.BaseFragment
+import cn.com.lasong.utils.FileUtils
 import cn.com.lasong.widget.adapterview.adapter.ZRecyclerViewAdapter
 import cn.com.lasong.zapp.R
 import cn.com.lasong.zapp.database.VideoEntity
@@ -70,6 +71,12 @@ class VideoFragment : BaseFragment() {
                         val video = videoModel.data[position]
                         val shareIntent: Intent = Intent().apply {
                             action = Intent.ACTION_SEND
+                            if (null == video.uri) {
+                                video.uri = FileUtils.getFileContentUri(context, video.path)?.toString();
+                            }
+                            if (null == video.uri) {
+                                return@apply;
+                            }
                             putExtra(Intent.EXTRA_STREAM, Uri.parse(video.uri))
                             type = "video/mp4"
                         }

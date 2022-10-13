@@ -1,6 +1,7 @@
 package cn.com.lasong.zapp
 
 import android.content.Intent
+import android.net.Uri
 import android.os.SystemClock
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -38,6 +39,9 @@ open class MainViewModel : ViewModel() {
     val recordingVideo = MutableLiveData<VideoEntity?>()
     val recordingState = MutableLiveData<Boolean>()
 
+    // 当前正在拍摄的视频信息
+    val cameraVideo = MutableLiveData<VideoEntity?>()
+    
     val params = MutableLiveData<RecordBean>().apply {
         MMKV.defaultMMKV().let {
             it?.getString(ZApp.KEY_RECORD_SAVE, null)
@@ -193,6 +197,15 @@ open class MainViewModel : ViewModel() {
                 )
             }
 
+        }
+    }
+
+    // 更新摄像头拍摄结果
+    fun updateCamera(uri: Uri) {
+        viewModelScope.launch {
+            // TODO: 解析获取参数
+//            recordingVideo.value = video
+//            recordingState.value = recording
         }
     }
 }

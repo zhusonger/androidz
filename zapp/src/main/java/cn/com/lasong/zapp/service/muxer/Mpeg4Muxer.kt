@@ -175,7 +175,7 @@ class Mpeg4Muxer : ICaptureCallback {
                     arrayOf("video/mp4")
                 ) { path, uri ->
                     video?.path = path
-                    video?.uri = uri.toString()
+                    video?.uri = uri?.toString()
                     video?.title = file.name.substringBefore(".")
                     if (null != video) {
                         val dao = ZApp.appInstance().database.getVideoDao()
