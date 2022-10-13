@@ -35,6 +35,8 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 
 /**
@@ -598,11 +600,14 @@ class VideoCapture(private val scope: CoroutineScope) : SurfaceTexture.OnFrameAv
         }
         val result: Any? = withContext(Dispatchers.IO) {
             val bitmap: Bitmap
+            // 最大边不超过512
+            val maxSize = max(renderWidth, renderHeight);
+            val ratio =  if (maxSize > 512) 512.0 / maxSize else 1.0
             try {
                 bitmap = Bitmap.createBitmap(
                     fixPixels,
-                    renderWidth,
-                    renderHeight,
+                    (renderWidth * ratio).roundToInt(),
+                    (renderHeight * ratio).roundToInt(),
                     Bitmap.Config.ARGB_8888
                 )
             } catch (e: Exception) {
